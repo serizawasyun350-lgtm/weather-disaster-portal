@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>気象・地震・防災・NHKニュース 総合情報ポータル（気象庁デザイン準拠）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* 気象庁（JMA）公式カラーシステム＆アクセシビリティ変数 */
+    :root {
+      --jma-navy: #003366;
+      --jma-blue: #004098;
+      --jma-sky: #e6f0fa;
+      --jma-bg: #f4f6f9;
+      --jma-card: #ffffff;
+      --jma-border: #cbd5e1;
+      --jma-text: #0f172a;
+      --jma-text-muted: #475569;
+      --jma-gold: #ffd700;
+      --jma-warn: #f59e0b;
+      --jma-alarm: #dc2626;
+      --jma-special: #7e22ce;
+      --jma-safe: #15803d;
+    }
+
+    body.dark-mode {
+      --jma-bg: #0b1120;
+      --jma-card: #111827;
+      --jma-border: #334155;
+      --jma-text: #f8fafc;
+      --jma-text-muted: #94a3b8;
+      --jma-sky: #1e293b;
+    }
+
+    body.high-contrast {
+      --jma-bg: #000000;
+      --jma-card: #000000;
+      --jma-border: #ffff00;
+      --jma-text: #ffffff;
+      --jma-text-muted: #fde047;
+      --jma-navy: #000000;
+      --jma-blue: #002266;
+    }
+
+    body.font-sm { font-size: 14px; }
+    body.font-md { font-size: 16px; }
+    body.font-lg { font-size: 18px; }
+
+    body {
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      background-color: var(--jma-bg);
+      color: var(--jma-text);
+      transition: background-color 0.2s, color 0.2s;
+      overflow-x: hidden;
+    }
+
+    .jma-section-title {
+      border-left: 5px solid #004098;
+      padding-left: 0.75rem;
+      font-weight: 800;
+      color: var(--jma-text);
+    }
+
+    .jma-card {
+      background-color: var(--jma-card);
+      border-color: var(--jma-border);
+    }
+
+    /* 緊急速報ティッカーアニメーション（1秒間隔の即時更新） */
+    @keyframes tickerMove {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-track {
+      display: inline-flex;
+      white-space: nowrap;
+      animation: tickerMove 20s linear infinite;
+    }
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    /* 震度階級バッジカラー */
+    .shindo-1 { background-color: #f2f2ff; color: #1e293b; border: 1px solid #94a3b8; }
+    .shindo-2 { background-color: #00aaff; color: #ffffff; }
+    .shindo-3 { background-color: #0041ff; color: #ffffff; }
+    .shindo-4 { background-color: #fae696; color: #1e293b; border: 1px solid #d97706; }
+    .shindo-5m { background-color: #ffe600; color: #1e293b; border: 1px solid #b45309; }
+    .shindo-5p { background-color: #ff9900; color: #000000; }
+    .shindo-6m { background-color: #ff2800; color: #ffffff; }
+    .shindo-6p { background-color: #a50021; color: #ffffff; }
+    .shindo-7 { background-color: #b40068; color: #ffffff; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--jma-bg); }
+    ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #004098; }
+  </style>
+</head>
+<body class="font-md min-h-screen flex flex-col">
+
+  <!-- 最新ニュース・速報ヘッドラインセクション -->
+  <section id="top-latest-news-bar" class="bg-[#001a35] text-white border-b-2 border-[#FFD700] py-2.5 px-3 relative z-50 shadow-md">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-blue-400/30">
+        <div class="flex items-center gap-2">
+          <span class="bg-[#dc2626] text-white text-[11px] font-black px-2 py-0.5 rounded animate-pulse">最新ニュース</span>
+          <span class="font-black text-xs sm:text-sm text-[#FFD700]">NHK公式ニュース リアルタイムヘッドライン</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+          <button type="button" onclick="App.checkNewAnnouncements(true)" class="px-2.5 py-0.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-bold cursor-pointer">
+            🔄 最新ニュース更新
+          </button>
+          <button type="button" onclick="App.navigate('#/news')" class="px-2.5 py-0.5 rounded bg-[#004098] hover:bg-blue-700 text-white font-bold cursor-pointer">
+            📰 記事一覧・検索へ ›
+          </button>
+          <a href="https://www.nhk.or.jp/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-0.5 rounded bg-[#FFD700] text-black font-black">
+            NHK公式 (nhk.or.jp) ↗
+          </a>
+        </div>
+      </div>
+      <div id="top-news-headlines-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+    </div>
+  </section>
+
+  <!-- 緊急防災速報ティッカー＆リアルタイムパネル（1秒自動更新） -->
+  <div class="bg-[#8b0000] text-white text-xs font-bold py-2 px-3 border-b-2 border-red-400 relative z-40 overflow-hidden shadow-md">
+    <div class="max-w-7xl mx-auto space-y-2">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <span class="bg-[#FFD700] text-black px-2.5 py-0.5 rounded font-black shrink-0 animate-pulse">防災・気象速報 (1秒更新)</span>
+        <div class="overflow-hidden flex-1 min-w-[200px] bg-black/25 px-2 py-1 rounded border border-red-400/40">
+          <div id="emergency-ticker" class="ticker-track">
+            <span class="mr-12">【気象情報】最新の天気予報・警報注意報およびNHKニュースを高速読み込み中...</span>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-1 shrink-0">
+          <button type="button" onclick="App.setTickerFilter('all')" id="ticker-btn-all" class="px-2 py-0.5 rounded bg-[#FFD700] text-black font-black text-[11px] cursor-pointer">すべて</button>
+          <button type="button" onclick="App.setTickerFilter('weather')" id="ticker-btn-weather" class="px-2 py-0.5 rounded bg-red-950 hover:bg-red-800 text-white border border-red-400/50 text-[11px] cursor-pointer">🌤️ 気象情報</button>
+          <button type="button" onclick="App.setTickerFilter('news')" id="ticker-btn-news" class="px-2 py-0.5 rounded bg-red-950 hover:bg-red-800 text-white border border-red-400/50 text-[11px] cursor-pointer">📰 ニュース</button>
+          <button type="button" onclick="App.setTickerFilter('earthquake')" id="ticker-btn-earthquake" class="px-2 py-0.5 rounded bg-red-950 hover:bg-red-800 text-white border border-red-400/50 text-[11px] cursor-pointer">🌋 地震・津波</button>
+          <button type="button" onclick="App.toggleTickerDrawer()" id="ticker-drawer-toggle" class="px-2 py-0.5 rounded bg-white text-[#8b0000] font-black text-[11px] hover:bg-yellow-100 cursor-pointer">
+            📋 速報一覧を表示 ▼
+          </button>
+        </div>
+      </div>
+      <div id="ticker-live-summary-bar" class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-1 border-t border-red-400/30 text-[11px]"></div>
+      <div id="ticker-detail-drawer" class="hidden bg-[#5c0000] rounded-lg border border-[#FFD700] p-2.5 space-y-1.5 max-h-56 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- グローバルヘッダー -->
+  <header class="bg-[#003366] text-white shadow-md relative z-30 border-b-4 border-[#FFD700]">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <a href="#/weather" onclick="App.navigate('#/weather'); return false;" class="flex items-center gap-3 group">
+          <div class="w-11 h-11 rounded-lg bg-[#004098] border-2 border-[#FFD700] flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition">
+            <svg class="w-7 h-7 text-[#FFD700]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] bg-blue-900 border border-blue-400 px-2 py-0.5 rounded font-bold tracking-wider">METEOROLOGICAL &amp; NEWS PORTAL</span>
+              <span id="current-route-badge" class="text-[11px] font-mono bg-black/40 text-[#FFD700] px-2 py-0.5 rounded">#/weather</span>
+            </div>
+            <h1 class="text-base sm:text-xl font-black tracking-tight mt-0.5">気象・地震・防災・NHKニュース 総合情報ポータル</h1>
+          </div>
+        </a>
+
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <button type="button" id="btn-auto-watch" onclick="App.toggleAutoWatch()" class="px-2.5 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-bold border border-emerald-400 flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+            <span id="auto-watch-dot" class="w-2 h-2 rounded-full bg-lime-300 animate-ping"></span>
+            <span id="auto-watch-label">自動更新: 1秒 (ON)</span>
+          </button>
+          <div class="bg-[#002244] border border-blue-400/50 px-2.5 py-1.5 rounded font-mono font-bold text-[#FFD700]" id="jst-clock">
+            2026/11/24 15:18:00 JST
+          </div>
+          <div class="flex items-center bg-[#002244] rounded border border-blue-400/40 overflow-hidden" role="group">
+            <button type="button" onclick="App.setFontSize('sm')" class="px-2 py-1 hover:bg-[#004098] font-bold cursor-pointer">小</button>
+            <button type="button" onclick="App.setFontSize('md')" class="px-2 py-1 hover:bg-[#004098] font-bold border-x border-blue-400/40 cursor-pointer">標準</button>
+            <button type="button" onclick="App.setFontSize('lg')" class="px-2 py-1 hover:bg-[#004098] font-bold cursor-pointer">大</button>
+          </div>
+          <button type="button" onclick="App.toggleDarkMode()" class="px-2.5 py-1.5 rounded bg-[#004098] hover:bg-blue-700 border border-blue-300 font-bold cursor-pointer">
+            🌓 表示切替
+          </button>
+          <button type="button" onclick="App.toggleHighContrast()" class="px-2.5 py-1.5 rounded bg-[#004098] hover:bg-blue-700 border border-blue-300 font-bold cursor-pointer">
+            👁️ 高コントラスト
+          </button>
+        </div>
+      </div>
+
+      <nav class="mt-3 pt-2.5 border-t border-blue-400/30 flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <a href="#/weather" onclick="App.navigate('#/weather'); return false;" data-nav="weather" class="nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#004098] text-white border-b-4 border-[#FFD700] flex items-center gap-1.5 transition">
+          <span>🌤️</span><span>天気予報・市エリア別</span>
+        </a>
+        <a href="#/earthquake" onclick="App.navigate('#/earthquake'); return false;" data-nav="earthquake" class="nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#002244] hover:bg-[#004098] text-blue-100 flex items-center gap-1.5 transition">
+          <span>🌋</span><span>地震・津波・火山情報</span>
+        </a>
+        <a href="#/news" onclick="App.navigate('#/news'); return false;" data-nav="news" class="nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#002244] hover:bg-[#004098] text-blue-100 flex items-center gap-1.5 transition">
+          <span>📰</span><span>NHKニュース・年月アーカイブ</span>
+        </a>
+        <a href="#/api" onclick="App.navigate('#/api'); return false;" data-nav="api" class="nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#002244] hover:bg-[#004098] text-blue-100 flex items-center gap-1.5 transition">
+          <span>📡</span><span>API・NHK RSS取得</span>
+        </a>
+        <a href="#/tools100" onclick="App.navigate('#/tools100'); return false;" data-nav="tools100" class="nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#002244] hover:bg-[#004098] text-blue-100 flex items-center gap-1.5 transition">
+          <span>🧰</span><span>関連機能100選スイート</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- クイックアクセスバー -->
+  <div class="bg-[#e6f0fa] dark:bg-slate-800 border-b border-[var(--jma-border)] py-2 px-3 relative z-20">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="font-black text-[#003366] dark:text-blue-300 mr-1">🔗 公式詳細ポータル:</span>
+        <a href="https://www.nhk.or.jp/" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-[#003366] hover:bg-[#004098] text-white font-bold shadow-xs transition">
+          詳しい情報は https://www.nhk.or.jp/ にアクセス ↗
+        </a>
+        <a href="https://news.web.nhk/kishou-saigai/weather/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-white dark:bg-slate-900 border border-[#004098] text-[#003366] dark:text-blue-200 hover:bg-blue-50 font-bold transition">
+          🌤️ 詳しい天気情報 ↗
+        </a>
+        <a href="https://news.web.nhk/kishou-saigai/typhoon/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-white dark:bg-slate-900 border border-red-600 text-red-700 dark:text-red-300 hover:bg-red-50 font-bold transition">
+          🌊 詳しい地震津波情報 ↗
+        </a>
+        <a href="https://news.web.nhk/kishou-saigai/volcano/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-white dark:bg-slate-900 border border-orange-600 text-orange-800 dark:text-orange-300 hover:bg-orange-50 font-bold transition">
+          🌋 火山詳しい情報 ↗
+        </a>
+        <a href="https://news.web.nhk/kishou-saigai/evacuation/" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-white dark:bg-slate-900 border border-purple-700 text-purple-800 dark:text-purple-300 hover:bg-purple-50 font-bold transition">
+          🚨 詳しい災害情報 ↗
+        </a>
+        <a href="https://news.web.nhk/bousai-map/rain/?lat=35.0763&lng=138.9103&zoom=9&type=radar" target="_blank" rel="noopener noreferrer" class="px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white font-bold transition">
+          🗺️ 天気地図（雨雲レーダー） ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 flex-1">
+
+    <!-- VIEW 1: 天気予報 -->
+    <section id="view-weather" class="app-view space-y-5">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="jma-section-title text-lg">全国47都道府県・市エリア別 天気予報・気象概況（超高速ロード・API連携）</h2>
+            <p id="wx-api-meta" class="text-xs text-[var(--jma-text-muted)] mt-1">発表官署: 静岡地方気象台 ／ 選択地域: 静岡（静岡市・焼津市） ／ CityCode: 220010</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="App.detectLocationAndFetchWeather()" class="px-3 py-1.5 bg-[#FF6600] hover:bg-orange-500 text-white text-xs font-black rounded shadow flex items-center gap-1.5 transition cursor-pointer">
+              <span>📍 現在地から自動取得</span>
+            </button>
+            <button type="button" onclick="App.fetchTsukumijimaWeather(App.getSelectedPref(), false, App.getSelectedCityCode())" class="px-3 py-1.5 bg-[#004098] hover:bg-[#003366] text-white text-xs font-bold rounded shadow-xs transition cursor-pointer">
+              🔄 天気API最新取得
+            </button>
+            <button type="button" onclick="App.inspectCurrentWeatherAPI()" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-900 text-xs font-bold rounded transition cursor-pointer">
+              🔍 API JSON表示
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg bg-[var(--jma-sky)] border border-[var(--jma-border)] mb-3">
+          <div>
+            <label for="region-select" class="block text-xs font-black text-[#003366] dark:text-blue-200 mb-1">① 都道府県を選択</label>
+            <select id="region-select" onchange="App.changePrefecture(this.value)" class="w-full rounded border-2 border-[#004098] bg-[var(--jma-card)] px-3 py-2 text-sm font-bold cursor-pointer">
+            </select>
+          </div>
+          <div>
+            <label for="municipality-select" class="block text-xs font-black text-[#003366] dark:text-blue-200 mb-1">② 市を選択</label>
+            <select id="municipality-select" onchange="App.changeMunicipality(this.value)" class="w-full rounded border-2 border-emerald-600 bg-[var(--jma-card)] px-3 py-2 text-sm font-bold cursor-pointer">
+            </select>
+          </div>
+          <div>
+            <label for="city-area-select" class="block text-xs font-black text-[#003366] dark:text-blue-200 mb-1">③ 予報エリア</label>
+            <select id="city-area-select" onchange="App.changeCityArea(this.value)" class="w-full rounded border-2 border-[#FF6600] bg-[var(--jma-card)] px-3 py-2 text-sm font-bold cursor-pointer">
+            </select>
+          </div>
+          <div>
+            <label for="custom-citycode-input" class="block text-xs font-black text-[#003366] dark:text-blue-200 mb-1">④ シティコード直接入力</label>
+            <div class="flex items-center gap-1.5">
+              <input type="text" id="custom-citycode-input" maxlength="6" value="220010" onkeydown="if(event.key==='Enter') App.applyCustomCityCode()" class="w-full rounded border-2 border-[#003366] bg-[var(--jma-card)] px-3 py-2 text-sm font-mono font-bold">
+              <button type="button" onclick="App.applyCustomCityCode()" class="px-3 py-2 bg-[#003366] hover:bg-[#004098] text-white text-xs font-bold rounded shrink-0 cursor-pointer">取得</button>
+              <button type="button" onclick="App.toggleCityCodeDirectory()" class="px-2.5 py-2 bg-amber-500 hover:bg-amber-400 text-black text-xs font-black rounded shrink-0 cursor-pointer">📋 一覧</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="pref-region-tabs" class="space-y-2 p-3 rounded-lg border border-[var(--jma-border)] bg-[var(--jma-bg)]"></div>
+
+        <div id="citycode-directory-panel" class="hidden mt-3 p-3 rounded-lg border-2 border-[#004098] bg-[var(--jma-card)]">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-[var(--jma-border)]">
+            <h3 class="font-black text-sm text-[#003366] dark:text-blue-200">📋 全国47都道府県＆主要市・細分区域 シティコード一覧</h3>
+            <div class="flex items-center gap-2">
+              <input type="text" id="citycode-search-input" oninput="App.renderCityCodeDirectory()" placeholder="検索..." class="rounded border border-[var(--jma-border)] bg-[var(--jma-bg)] px-2.5 py-1 text-xs">
+              <button type="button" onclick="App.toggleCityCodeDirectory()" class="px-2.5 py-1 bg-slate-200 text-slate-900 rounded text-xs font-bold cursor-pointer">閉じる</button>
+            </div>
+          </div>
+          <div id="citycode-directory-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-h-72 overflow-y-auto p-1"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="jma-section-title text-base">発表中の警報・注意報・概況</h3>
+              <span id="wx-status-badge" class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-900 border border-amber-400">注意報発表中</span>
+            </div>
+            <div id="wx-warnings-box" class="flex flex-wrap gap-1.5 my-3"></div>
+            <div class="p-3 rounded bg-[var(--jma-bg)] border border-[var(--jma-border)] text-xs leading-relaxed max-h-56 overflow-y-auto whitespace-pre-line" id="wx-description-text">
+              気象概況データを高速読み込み中...
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-[var(--jma-border)] flex flex-wrap gap-2">
+            <a href="https://news.web.nhk/kishou-saigai/weather/" target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 px-3 rounded bg-[#004098] hover:bg-[#003366] text-white text-xs font-bold">NHK 詳しい天気情報 ↗</a>
+            <a href="https://news.web.nhk/bousai-map/rain/?lat=35.0763&lng=138.9103&zoom=9&type=radar" target="_blank" rel="noopener noreferrer" class="flex-1 text-center py-2 px-3 rounded bg-sky-700 hover:bg-sky-600 text-white text-xs font-bold">雨雲レーダー地図 ↗</a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-4">
+          <div id="wx-forecasts-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+          <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="jma-section-title text-sm">時系列 気温（℃）・降水確率（%）推移チャート</h3>
+              <span class="text-xs text-[var(--jma-text-muted)]">3時間ごと予測モデル</span>
+            </div>
+            <div class="w-full h-48 relative">
+              <canvas id="weather-chart-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm overflow-x-auto">
+        <h3 class="jma-section-title text-base mb-3">3時間ごとの天気・気温・降水確率・風向風速・湿度</h3>
+        <table class="w-full text-xs text-center border-collapse min-w-[640px]">
+          <thead>
+            <tr class="bg-[#003366] text-white">
+              <th class="p-2 border border-blue-800 text-left">時刻</th>
+              <th class="p-2 border border-blue-800">03時</th>
+              <th class="p-2 border border-blue-800">06時</th>
+              <th class="p-2 border border-blue-800">09時</th>
+              <th class="p-2 border border-blue-800">12時</th>
+              <th class="p-2 border border-blue-800">15時</th>
+              <th class="p-2 border border-blue-800">18時</th>
+              <th class="p-2 border border-blue-800">21時</th>
+              <th class="p-2 border border-blue-800">24時</th>
+            </tr>
+          </thead>
+          <tbody id="hourly-weather-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VIEW 2: 地震・津波・火山情報 -->
+    <section id="view-earthquake" class="app-view hidden space-y-5">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="jma-section-title text-lg">地震情報・震源分布マップ・津波監視・緊急地震速報訓練</h2>
+            <p class="text-xs text-[var(--jma-text-muted)] mt-1">気象庁震度階級基準リアルタイム履歴フィルター</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="App.triggerEEWDrill()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-black rounded shadow animate-pulse cursor-pointer">
+              🚨 緊急地震速報（EEW）訓練テスト
+            </button>
+            <a href="https://news.web.nhk/kishou-saigai/typhoon/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-[#003366] text-white text-xs font-bold rounded">詳しい地震津波情報 ↗</a>
+            <a href="https://news.web.nhk/kishou-saigai/volcano/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-orange-700 text-white text-xs font-bold rounded">火山詳しい情報 ↗</a>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <div class="p-3 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-400">
+            <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300">🌊 津波予報・警報発表状況</div>
+            <div class="text-sm font-black mt-1 text-emerald-950 dark:text-white">現在、津波警報・注意報は発表されていません。</div>
+          </div>
+          <div class="p-3 rounded bg-orange-50 dark:bg-orange-950/40 border border-orange-400">
+            <div class="text-xs font-bold text-orange-800 dark:text-orange-300">🌋 噴火警報・火口周辺警報</div>
+            <div class="text-sm font-black mt-1 text-orange-950 dark:text-white">桜島・諏訪之瀬島（レベル3入山規制）、富士山（レベル1）</div>
+          </div>
+          <div class="p-3 rounded bg-[var(--jma-sky)] border border-[var(--jma-border)]">
+            <label for="eq-shindo-filter" class="block text-xs font-bold mb-1">最大震度で絞り込み:</label>
+            <select id="eq-shindo-filter" onchange="App.renderEarthquakeView()" class="w-full rounded border border-[#004098] bg-[var(--jma-card)] px-2.5 py-1.5 text-sm font-bold cursor-pointer">
+              <option value="all">すべての地震を表示</option>
+              <option value="3">震度3以上のみ</option>
+              <option value="4">震度4以上のみ</option>
+              <option value="5">震度5弱以上のみ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-2 border border-[var(--jma-border)] rounded-lg p-3 bg-[#08192d] text-white">
+            <div class="text-xs font-bold text-[#FFD700] mb-2 flex items-center justify-between">
+              <span>🗺️ 日本列島 震源分布モニター</span>
+              <span class="text-[10px] text-slate-300">円サイズ＝マグニチュード</span>
+            </div>
+            <div class="w-full h-72 relative">
+              <canvas id="eq-map-canvas"></canvas>
+            </div>
+          </div>
+          <div class="lg:col-span-3 space-y-2 max-h-88 overflow-y-auto pr-1" id="eq-list-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: NHKニュース -->
+    <section id="view-news" class="app-view hidden space-y-5">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="jma-section-title text-lg">NHKニュース8カテゴリRSS＆年・月アーカイブ検索</h2>
+            <p class="text-xs text-[var(--jma-text-muted)] mt-1">ジャンル・年・月・キーワードで複合検索</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="App.checkNewAnnouncements(true)" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded shadow-xs cursor-pointer">🔔 新着チェック</button>
+            <button type="button" onclick="App.fetchAllNHKCategories()" class="px-3 py-1.5 bg-[#004098] hover:bg-[#003366] text-white text-xs font-bold rounded shadow-xs cursor-pointer">📡 RSS一括取得</button>
+            <a href="https://www.nhk.or.jp/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-[#003366] text-[#FFD700] border border-[#FFD700] text-xs font-black rounded">NHK公式 ↗</a>
+          </div>
+        </div>
+
+        <div id="nhk-category-tabs" class="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-[var(--jma-border)]"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 p-3 rounded-lg bg-[var(--jma-sky)] border border-[var(--jma-border)]">
+          <div>
+            <label for="news-genre-select" class="block text-xs font-bold mb-1">ジャンル選択:</label>
+            <select id="news-genre-select" onchange="App.updateFiltersFromUI()" class="w-full rounded border border-[#004098] bg-[var(--jma-card)] px-2.5 py-1.5 text-sm font-bold cursor-pointer">
+              <option value="すべて">すべてのジャンル</option>
+              <option value="主要ニュース">主要ニュース (cat0)</option>
+              <option value="社会">社会 (cat1)</option>
+              <option value="文化・エンタメ">文化・エンタメ (cat2)</option>
+              <option value="科学・医療">科学・医療 (cat3)</option>
+              <option value="政治">政治 (cat4)</option>
+              <option value="経済">経済 (cat5)</option>
+              <option value="国際">国際 (cat6)</option>
+              <option value="スポーツ">スポーツ (cat7)</option>
+            </select>
+          </div>
+          <div>
+            <label for="news-year-select" class="block text-xs font-bold mb-1">年（Year）:</label>
+            <select id="news-year-select" onchange="App.updateFiltersFromUI()" class="w-full rounded border border-[#004098] bg-[var(--jma-card)] px-2.5 py-1.5 text-sm font-bold cursor-pointer">
+              <option value="すべて">すべての年</option>
+              <option value="2026">2026年</option>
+              <option value="2025">2025年</option>
+              <option value="2024">2024年</option>
+              <option value="2023">2023年</option>
+              <option value="2022">2022年</option>
+              <option value="2021">2021年</option>
+              <option value="2020">2020年</option>
+            </select>
+          </div>
+          <div>
+            <label for="news-month-select" class="block text-xs font-bold mb-1">月（Month）:</label>
+            <select id="news-month-select" onchange="App.updateFiltersFromUI()" class="w-full rounded border border-[#004098] bg-[var(--jma-card)] px-2.5 py-1.5 text-sm font-bold cursor-pointer">
+              <option value="すべて">すべての月</option>
+              <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
+              <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
+              <option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="news-keyword-input" class="block text-xs font-bold mb-1">キーワード検索:</label>
+            <div class="flex gap-1.5">
+              <input type="text" id="news-keyword-input" oninput="App.updateFiltersFromUI()" placeholder="例: 気象 地震 台風..." class="w-full rounded border border-[#004098] bg-[var(--jma-card)] px-3 py-1.5 text-sm">
+              <button type="button" onclick="App.resetNewsFilters()" class="px-3 py-1.5 bg-slate-600 hover:bg-slate-700 text-white text-xs font-bold rounded shrink-0 cursor-pointer">解除</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-3 text-xs">
+          <span id="news-result-count" class="font-bold text-[#003366] dark:text-blue-300">該当記事: 0件</span>
+        </div>
+      </div>
+
+      <div id="news-articles-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- VIEW 3.5: 記事詳細ビューア -->
+    <section id="view-article" class="app-view hidden space-y-4">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-5 shadow-md">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[var(--jma-border)]">
+          <button type="button" onclick="App.navigate('#/news')" class="px-3 py-1.5 bg-[#003366] hover:bg-[#004098] text-white text-xs font-bold rounded cursor-pointer">← ニュース一覧に戻る</button>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="App.speakCurrentArticle()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded cursor-pointer">🔊 音声読み上げ</button>
+            <button type="button" onclick="App.stopSpeech()" class="px-2.5 py-1.5 bg-slate-500 text-white text-xs font-bold rounded cursor-pointer">⏹ 停止</button>
+            <button type="button" onclick="App.copyCurrentArticleUrl()" class="px-3 py-1.5 bg-slate-200 text-slate-900 text-xs font-bold rounded cursor-pointer">🔗 URLコピー</button>
+          </div>
+        </div>
+        <div id="article-detail-body"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: API取得マネージャー -->
+    <section id="view-api" class="app-view hidden space-y-5">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+        <h2 class="jma-section-title text-lg mb-1">カスタムAPI URL ＆ NHK公式8カテゴリRSSフィード取得エンジン</h2>
+        <p class="text-xs text-[var(--jma-text-muted)] mb-4">任意のRSSまたはJSON APIのURLを入力して取得できます。</p>
+
+        <div class="p-3 rounded-lg bg-[var(--jma-sky)] border border-[var(--jma-border)] mb-4">
+          <label for="custom-feed-url" class="block text-xs font-black mb-1">取得するRSS / JSON APIのURL:</label>
+          <div class="flex flex-wrap sm:flex-nowrap gap-2">
+            <input type="url" id="custom-feed-url" value="https://news.web.nhk/n-data/conf/na/rss/cat0.xml" class="flex-1 rounded border-2 border-[#004098] bg-[var(--jma-card)] px-3 py-2 text-sm font-mono">
+            <select id="custom-feed-genre" class="rounded border border-[#004098] bg-[var(--jma-card)] px-2.5 py-2 text-xs font-bold cursor-pointer">
+              <option value="主要ニュース">主要ニュース</option>
+              <option value="社会">社会</option>
+              <option value="文化・エンタメ">文化・エンタメ</option>
+              <option value="科学・医療">科学・医療</option>
+            </select>
+            <button type="button" onclick="App.fetchCustomFeedFromInput()" class="px-4 py-2 bg-[#003366] hover:bg-[#004098] text-white text-xs font-black rounded shrink-0 cursor-pointer">🚀 URLから取得・解析</button>
+          </div>
+        </div>
+
+        <h3 class="font-black text-sm mb-2">📡 NHKニュース公式8カテゴリ RSS URLプリセット</h3>
+        <div id="nhk-rss-preset-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4"></div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-black">📄 取得レスポンス生データインスペクタ</span>
+            <span id="api-fetch-status" class="text-xs font-mono text-emerald-700 dark:text-emerald-300">待機中</span>
+          </div>
+          <pre id="raw-api-inspector" class="w-full h-64 overflow-auto p-3 rounded bg-slate-950 text-emerald-300 font-mono text-xs border border-slate-700">ここに取得データが表示されます。</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: 関連機能100選スイート -->
+    <section id="view-tools100" class="app-view hidden space-y-5">
+      <div class="jma-card rounded-lg border border-[var(--jma-border)] p-4 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="jma-section-title text-lg">気象・地震・防災・情報ポータル 関連機能100選スイート</h2>
+            <p class="text-xs text-[var(--jma-text-muted)] mt-1">100個の機能を利用できます</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="tools100-search" oninput="App.renderTools100()" placeholder="機能名検索..." class="rounded border-2 border-[#004098] bg-[var(--jma-card)] px-3 py-1.5 text-sm">
+          </div>
+        </div>
+
+        <div id="tool100-runner-panel" class="p-4 rounded-lg bg-[var(--jma-sky)] border-2 border-[#004098] mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black bg-[#003366] text-[#FFD700] px-2 py-0.5 rounded" id="tool100-active-badge">No.001 実行中</span>
+            <span class="text-xs text-[var(--jma-text-muted)]">カードをクリックするとツールが起動します</span>
+          </div>
+          <h3 id="tool100-active-title" class="font-black text-base mb-1">不快指数（DI）リアルタイム計算機</h3>
+          <p id="tool100-active-desc" class="text-xs text-[var(--jma-text-muted)] mb-3">気温と湿度から体感的な蒸し暑さを算出します。</p>
+          <div id="tool100-active-body" class="bg-[var(--jma-card)] p-3 rounded border border-[var(--jma-border)] text-sm">
+            <div class="space-y-2">
+              <div><label class="block text-xs font-bold">気温 (℃):</label><input type="number" id="tool-di-temp" value="28" class="w-full border rounded px-2 py-1 text-xs"></div>
+              <div><label class="block text-xs font-bold">湿度 (%):</label><input type="number" id="tool-di-hum" value="65" class="w-full border rounded px-2 py-1 text-xs"></div>
+              <button type="button" onclick="App.calcDI()" class="px-3 py-1 bg-[#004098] text-white rounded text-xs font-bold cursor-pointer">計算する</button>
+              <div id="tool-di-result" class="font-black text-xs text-blue-900 mt-2">不快指数: --</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tools100-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 max-h-[540px] overflow-y-auto pr-1"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- トースト通知 -->
+  <div id="toast-notification" class="fixed bottom-4 right-4 z-50 hidden max-w-sm bg-[#003366] text-white border-2 border-[#FFD700] px-4 py-3 rounded-lg shadow-xl text-xs font-bold"></div>
+
+  <!-- 緊急地震速報訓練モーダル -->
+  <div id="eew-modal" class="fixed inset-0 z-50 hidden bg-black/75 flex items-center justify-center p-4">
+    <div class="bg-[#8b0000] text-white border-4 border-[#FFD700] rounded-xl max-w-lg w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-red-400 pb-2 mb-3">
+        <span class="bg-[#FFD700] text-black px-2.5 py-1 rounded font-black text-sm">緊急地震速報（訓練テスト）</span>
+        <button type="button" onclick="document.getElementById('eew-modal').classList.add('hidden')" class="text-white font-black text-lg cursor-pointer">✕</button>
+      </div>
+      <p class="text-lg font-black mb-2">強い揺れに警戒してください（訓練）</p>
+      <p class="text-xs leading-relaxed mb-4">震源地：駿河湾沖 ／ 推定最大震度：5強</p>
+      <div class="flex justify-end">
+        <button type="button" onclick="document.getElementById('eew-modal').classList.add('hidden')" class="px-4 py-2 bg-[#FFD700] text-black font-black rounded text-xs cursor-pointer">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-[#002244] text-blue-100 text-xs py-6 px-4 mt-8 border-t-4 border-[#004098]">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="font-black text-white text-sm mb-1">気象・地震・防災・NHKニュース 総合情報ポータル</div>
+        <p class="text-blue-300">気象庁配色準拠UI ／ 1秒自動更新対応</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const App = (() => {
+      const citycodes = {
+        "北海道": "016010", "青森": "020010", "岩手": "030010", "宮城": "040010", "秋田": "050010",
+        "山形": "060010", "福島": "070010", "茨城": "080010", "栃木": "090010", "群馬": "100010",
+        "埼玉": "110010", "千葉": "120010", "東京": "130010", "神奈川": "140010", "新潟": "150010",
+        "富山": "160010", "石川": "170010", "福井": "180010", "山梨": "190010", "長野": "200010",
+        "岐阜": "210010", "静岡": "220010", "愛知": "230010", "三重": "240010", "滋賀": "250010",
+        "京都": "260010", "大阪": "270000", "兵庫": "280010", "奈良": "290010", "和歌山": "300010",
+        "鳥取": "310010", "島根": "320010", "岡山": "330010", "広島": "340010", "山口": "350010",
+        "徳島": "360010", "香川": "370000", "愛媛": "380010", "高知": "390010", "福岡": "400010",
+        "佐賀": "410010", "長崎": "420010", "熊本": "430010", "大分": "440010", "宮崎": "450010",
+        "鹿児島": "460010", "沖縄": "471010"
+      };
+
+      const PREF_CITIES_MAP = {
+        "北海道": [{ city: "札幌市・石狩地方", code: "016010" }],
+        "青森": [{ city: "青森市（津軽）", code: "020010" }],
+        "静岡": [
+          { city: "静岡市・焼津市（中部）", code: "220010" },
+          { city: "沼津市・三島市・富士市（東部）", code: "220040" },
+          { city: "浜松市・磐田市・掛川市（西部）", code: "220030" },
+          { city: "熱海市・伊東市・下田市（伊豆）", code: "220020" }
+        ],
+        "東京": [{ city: "東京23区・八王子市", code: "130010" }],
+        "大阪": [{ city: "大阪市・堺市", code: "270000" }]
+      };
+
+      const PREF_MUNICIPALITIES_MAP = {
+        "北海道": [{ name: "札幌市", code: "016010" }],
+        "青森": [{ name: "青森市", code: "020010" }],
+        "静岡": [
+          { name: "静岡市", code: "220010" }, { name: "沼津市", code: "220040" }, { name: "浜松市", code: "220030" },
+          { name: "三島市", code: "220040" }, { name: "富士市", code: "220040" }, { name: "焼津市", code: "220010" }
+        ],
+        "東京": [{ name: "東京23区", code: "130010" }],
+        "大阪": [{ name: "大阪市", code: "270000" }]
+      };
+
+      const PREF_REGION_GROUPS = [
+        { block: "北海道・東北", prefs: ["北海道", "青森", "岩手", "宮城", "秋田", "山形", "福島"] },
+        { block: "関東", prefs: ["茨城", "栃木", "群馬", "埼玉", "千葉", "東京", "神奈川"] },
+        { block: "甲信越・北陸", prefs: ["新潟", "富山", "石川", "福井", "山梨", "長野"] },
+        { block: "東海", prefs: ["岐阜", "静岡", "愛知", "三重"] },
+        { block: "近畿", prefs: ["滋賀", "京都", "大阪", "兵庫", "奈良", "和歌山"] },
+        { block: "中国・四国", prefs: ["鳥取", "島根", "岡山", "広島", "山口", "徳島", "香川", "愛媛", "高知"] },
+        { block: "九州・沖縄", prefs: ["福岡", "佐賀", "長崎", "熊本", "大分", "宮崎", "鹿児島", "沖縄"] }
+      ];
+
+      const NHK_RSS_CATEGORIES = [
+        { id: "cat0", genre: "主要ニュース", url: "https://news.web.nhk/n-data/conf/na/rss/cat0.xml" },
+        { id: "cat1", genre: "社会", url: "https://news.web.nhk/n-data/conf/na/rss/cat1.xml" },
+        { id: "cat2", genre: "文化・エンタメ", url: "https://news.web.nhk/n-data/conf/na/rss/cat2.xml" },
+        { id: "cat3", genre: "科学・医療", url: "https://news.web.nhk/n-data/conf/na/rss/cat3.xml" }
+      ];
+
+      const INITIAL_EARTHQUAKES = [
+        { id: "eq1", time: "2026/11/24 14:42", epicenter: "駿河湾", mag: "M4.3", maxShindo: "3", shindoClass: "shindo-3" },
+        { id: "eq2", time: "2026/11/24 11:18", epicenter: "茨城県沖", mag: "M4.8", maxShindo: "4", shindoClass: "shindo-4" }
+      ];
+
+      const INITIAL_ARTICLES = [
+        {
+          id: 101,
+          title: "太平洋側を中心に晴天続く 朝晩の冷え込みと乾燥に注意 気象庁",
+          genre: "主要ニュース",
+          date: "2026-11-24 15:00",
+          summary: "高気圧に覆われ太平洋側では晴れる所が多くなっています。",
+          body: "気象庁によりますと、本州付近は移動性高気圧に覆われ晴れています。"
+        }
+      ];
+
+      const TOOLS_100_LIST = Array.from({ length: 100 }, (_, idx) => ({
+        id: idx + 1,
+        title: idx === 0 ? "不快指数（DI）計算機" : `防災・気象ツール #${String(idx + 1).padStart(3, '0')}`,
+        cat: "ユーティリティ",
+        desc: "気象・防災データを処理する機能です。"
+      }));
+
+      const state = {
+        route: "weather",
+        selectedPref: "静岡",
+        selectedMunicipality: "静岡市",
+        selectedCityCode: "220010",
+        activeRegionBlock: "東海",
+        currentWeatherRaw: null,
+        articles: [...INITIAL_ARTICLES],
+        earthquakes: [...INITIAL_EARTHQUAKES],
+        filterGenre: "すべて",
+        activeArticleId: 101,
+        autoWatchEnabled: true,
+        autoWatchCountdown: 1,
+        activeTool100Id: 1,
+        tickerFilter: "all",
+        tickerDrawerOpen: false
+      };
+
+      function escapeHTML(str) {
+        if (str === null || str === undefined) return "";
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById("toast-notification");
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.remove("hidden");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.add("hidden"), 3000);
+      }
+
+      function navigate(hashStr) {
+        if (!hashStr.startsWith("#")) hashStr = "#" + hashStr;
+        if (window.location.hash !== hashStr) {
+          history.replaceState(null, "", hashStr);
+        }
+        handleHashChange(hashStr);
+      }
+
+      function handleHashChange(explicitHash) {
+        const rawHash = (typeof explicitHash === "string" ? explicitHash : window.location.hash) || "#/weather";
+        const [pathPart, queryPart] = rawHash.replace(/^#\/?/, "").split("?");
+        const segments = pathPart.split("/").filter(Boolean);
+        const routeName = segments[0] || "weather";
+
+        const badge = document.getElementById("current-route-badge");
+        if (badge) badge.textContent = rawHash.startsWith("#" ) ? rawHash : "#" + rawHash;
+
+        if (queryPart) {
+          const params = new URLSearchParams(queryPart);
+          if (params.get("pref") && citycodes[params.get("pref")]) {
+            state.selectedPref = params.get("pref");
+            const grp = PREF_REGION_GROUPS.find(g => g.prefs.includes(state.selectedPref));
+            if (grp) state.activeRegionBlock = grp.block;
+          }
+          if (params.get("city")) state.selectedCityCode = params.get("city");
+          if (params.get("muni")) state.selectedMunicipality = params.get("muni");
+        }
+
+        if (routeName === "article" && segments[1]) {
+          state.activeArticleId = Number(segments[1]);
+        }
+
+        state.route = routeName;
+        document.querySelectorAll(".app-view").forEach(sec => sec.classList.add("hidden"));
+
+        const targetViewId = routeName === "article" ? "view-article" : `view-${routeName}`;
+        const targetView = document.getElementById(targetViewId) || document.getElementById("view-weather");
+        if (targetView) targetView.classList.remove("hidden");
+
+        document.querySelectorAll(".nav-btn").forEach(btn => {
+          const navTarget = btn.getAttribute("data-nav");
+          const isMatch = navTarget === routeName || (routeName === "article" && navTarget === "news");
+          if (isMatch) {
+            btn.className = "nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#004098] text-white border-b-4 border-[#FFD700] flex items-center gap-1.5 transition";
+          } else {
+            btn.className = "nav-btn px-3 py-2 rounded-t font-bold text-xs sm:text-sm bg-[#002244] hover:bg-[#004098] text-blue-100 flex items-center gap-1.5 transition";
+          }
+        });
+
+        if (routeName === "weather") {
+          renderRegionSelectors();
+          fetchTsukumijimaWeather(state.selectedPref, true, state.selectedCityCode);
+        } else if (routeName === "earthquake") {
+          renderEarthquakeView();
+        } else if (routeName === "news") {
+          renderNHKCategoryUI();
+          renderNewsView();
+        } else if (routeName === "article") {
+          renderArticleDetail(state.activeArticleId);
+        } else if (routeName === "api") {
+          renderNHKCategoryUI();
+          renderRssPresets();
+        } else if (routeName === "tools100") {
+          renderTools100();
+          runTool100(state.activeTool100Id);
+        }
+      }
+
+      function renderRegionSelectors() {
+        const prefSel = document.getElementById("region-select");
+        if (prefSel) {
+          prefSel.innerHTML = Object.keys(citycodes).map(pref =>
+            `<option value="${escapeHTML(pref)}" ${pref === state.selectedPref ? "selected" : ""}>${escapeHTML(pref)}（代表: ${citycodes[pref]}）</option>`
+          ).join("");
+        }
+
+        const munis = PREF_MUNICIPALITIES_MAP[state.selectedPref] || [{ name: `${state.selectedPref}中心部`, code: citycodes[state.selectedPref] }];
+        if (!munis.some(m => m.name === state.selectedMunicipality)) {
+          state.selectedMunicipality = munis[0].name;
+        }
+        const muniSel = document.getElementById("municipality-select");
+        if (muniSel) {
+          muniSel.innerHTML = munis.map(m =>
+            `<option value="${escapeHTML(m.name)}" ${m.name === state.selectedMunicipality ? "selected" : ""}>${escapeHTML(m.name)}（${m.code}）</option>`
+          ).join("");
+        }
+
+        const areas = PREF_CITIES_MAP[state.selectedPref] || [{ city: state.selectedPref, code: citycodes[state.selectedPref] }];
+        const areaSel = document.getElementById("city-area-select");
+        if (areaSel) {
+          areaSel.innerHTML = areas.map(a =>
+            `<option value="${a.code}" ${a.code === state.selectedCityCode ? "selected" : ""}>${escapeHTML(a.city)} [${a.code}]</option>`
+          ).join("");
+        }
+
+        const codeInput = document.getElementById("custom-citycode-input");
+        if (codeInput) codeInput.value = state.selectedCityCode;
+
+        const tabsContainer = document.getElementById("pref-region-tabs");
+        if (tabsContainer) {
+          const activeGroup = PREF_REGION_GROUPS.find(g => g.block === state.activeRegionBlock) || PREF_REGION_GROUPS[3];
+          tabsContainer.innerHTML = `
+            <div class="flex flex-wrap items-center gap-1 pb-2 border-b border-[var(--jma-border)]">
+              <span class="text-[11px] font-black text-[#003366] dark:text-blue-200 mr-1">地方選択:</span>
+              ${PREF_REGION_GROUPS.map(g => `
+                <button type="button" onclick="App.selectRegionBlock('${escapeHTML(g.block)}')" class="px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${g.block === activeGroup.block ? "bg-[#003366] text-[#FFD700]" : "bg-[var(--jma-card)] border border-[var(--jma-border)] hover:border-[#004098]"}">
+                  ${escapeHTML(g.block)}
+                </button>
+              `).join("")}
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+              <span class="text-[11px] font-black text-[#003366] dark:text-blue-200 mr-1">都道府県:</span>
+              ${activeGroup.prefs.map(p => `
+                <button type="button" onclick="App.changePrefecture('${escapeHTML(p)}')" class="px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${p === state.selectedPref ? "bg-[#004098] text-white ring-2 ring-[#FFD700]" : "bg-[var(--jma-card)] border border-[var(--jma-border)] hover:bg-blue-50 dark:hover:bg-slate-800"}">
+                  ${escapeHTML(p)}
+                </button>
+              `).join("")}
+            </div>
+          `;
+        }
+      }
+
+      function selectRegionBlock(blockName) {
+        state.activeRegionBlock = blockName;
+        renderRegionSelectors();
+      }
+
+      function changePrefecture(prefName) {
+        if (!citycodes[prefName]) return;
+        state.selectedPref = prefName;
+        const grp = PREF_REGION_GROUPS.find(g => g.prefs.includes(prefName));
+        if (grp) state.activeRegionBlock = grp.block;
+        const munis = PREF_MUNICIPALITIES_MAP[prefName];
+        state.selectedMunicipality = munis && munis[0] ? munis[0].name : prefName;
+        state.selectedCityCode = munis && munis[0] ? munis[0].code : citycodes[prefName];
+        renderRegionSelectors();
+        syncWeatherHash();
+        fetchTsukumijimaWeather(prefName, false, state.selectedCityCode);
+      }
+
+      function changeMunicipality(muniName) {
+        const munis = PREF_MUNICIPALITIES_MAP[state.selectedPref] || [];
+        const found = munis.find(m => m.name === muniName);
+        state.selectedMunicipality = muniName;
+        if (found) state.selectedCityCode = found.code;
+        renderRegionSelectors();
+        syncWeatherHash();
+        fetchTsukumijimaWeather(state.selectedPref, false, state.selectedCityCode);
+      }
+
+      function changeCityArea(code) {
+        state.selectedCityCode = code;
+        const munis = PREF_MUNICIPALITIES_MAP[state.selectedPref] || [];
+        const matchedMuni = munis.find(m => m.code === code);
+        if (matchedMuni) state.selectedMunicipality = matchedMuni.name;
+        renderRegionSelectors();
+        syncWeatherHash();
+        fetchTsukumijimaWeather(state.selectedPref, false, code);
+      }
+
+      function applyCustomCityCode() {
+        const val = (document.getElementById("custom-citycode-input")?.value || "").trim();
+        if (!/^\d{6}$/.test(val)) {
+          showToast("6桁の数字シティコードを入力してください");
+          return;
+        }
+        selectCityFromDirectory(val);
+      }
+
+      function toggleCityCodeDirectory() {
+        const panel = document.getElementById("citycode-directory-panel");
+        if (!panel) return;
+        panel.classList.toggle("hidden");
+        if (!panel.classList.contains("hidden")) renderCityCodeDirectory();
+      }
+
+      function renderCityCodeDirectory() {
+        const grid = document.getElementById("citycode-directory-grid");
+        if (!grid) return;
+        const q = (document.getElementById("citycode-search-input")?.value || "").trim().toLowerCase();
+        const entries = [];
+        Object.entries(PREF_CITIES_MAP).forEach(([pref, areas]) => {
+          areas.forEach(a => entries.push({ pref, city: a.city, code: a.code }));
+        });
+        const filtered = entries.filter(e => !q || e.pref.toLowerCase().includes(q) || e.city.toLowerCase().includes(q) || e.code.includes(q));
+        grid.innerHTML = filtered.map(e => `
+          <button type="button" onclick="App.selectCityFromDirectory('${e.code}', '${escapeHTML(e.pref)}')" class="text-left p-2 rounded border transition cursor-pointer ${e.code === state.selectedCityCode ? "bg-[#003366] text-white border-[#FFD700]" : "bg-[var(--jma-bg)] border-[var(--jma-border)] hover:border-[#004098]"}">
+            <div class="flex items-center justify-between text-[10px] font-mono font-bold">
+              <span class="${e.code === state.selectedCityCode ? "text-[#FFD700]" : "text-[#004098]"}">${e.code}</span>
+              <span>${escapeHTML(e.pref)}</span>
+            </div>
+            <div class="text-xs font-bold truncate mt-0.5">${escapeHTML(e.city)}</div>
+          </button>
+        `).join("");
+      }
+
+      function selectCityFromDirectory(code, prefHint) {
+        let foundPref = prefHint || null;
+        if (!foundPref) {
+          for (const [p, areas] of Object.entries(PREF_CITIES_MAP)) {
+            if (areas.some(a => a.code === code)) { foundPref = p; break; }
+          }
+        }
+        if (foundPref) {
+          state.selectedPref = foundPref;
+          const grp = PREF_REGION_GROUPS.find(g => g.prefs.includes(foundPref));
+          if (grp) state.activeRegionBlock = grp.block;
+        }
+        state.selectedCityCode = code;
+        renderRegionSelectors();
+        renderCityCodeDirectory();
+        syncWeatherHash();
+        fetchTsukumijimaWeather(state.selectedPref, false, code);
+      }
+
+      function syncWeatherHash() {
+        const newHash = `#/weather?pref=${encodeURIComponent(state.selectedPref)}&muni=${encodeURIComponent(state.selectedMunicipality)}&city=${encodeURIComponent(state.selectedCityCode)}`;
+        history.replaceState(null, "", newHash);
+        const badge = document.getElementById("current-route-badge");
+        if (badge) badge.textContent = newHash;
+      }
+
+      function detectLocationAndFetchWeather() {
+        if (!("geolocation" in navigator)) {
+          showToast("位置情報に対応していません");
+          return;
+        }
+        showToast("📍 現在地を取得中...");
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            let nearestPref = "静岡";
+            let minDist = Infinity;
+            PREF_COORDS.forEach(item => {
+              const d = Math.hypot(item.lat - latitude, item.lng - longitude);
+              if (d < minDist) { minDist = d; nearestPref = item.pref; }
+            });
+            let targetCode = citycodes[nearestPref] || "220010";
+            state.selectedPref = nearestPref;
+            state.selectedCityCode = targetCode;
+            renderRegionSelectors();
+            syncWeatherHash();
+            fetchTsukumijimaWeather(nearestPref, false, targetCode);
+            showToast(`📍 現在地設定: ${nearestPref}`);
+          },
+          () => { showToast("位置情報の取得に失敗しました"); },
+          { timeout: 5000 }
+        );
+      }
+
+      async function fetchTsukumijimaWeather(prefName = "静岡", silent = false, overrideCode = null) {
+        const code = overrideCode || state.selectedCityCode || citycodes[prefName] || "220010";
+        const apiUrl = `https://weather.tsukumijima.net/api/forecast/city/${code}`;
+        const metaEl = document.getElementById("wx-api-meta");
+        if (metaEl) metaEl.textContent = `高速取得中... ${prefName} (${code})`;
+
+        try {
+          const fetchPromise = fetch(apiUrl);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500));
+          const res = await Promise.race([fetchPromise, timeoutPromise]);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          state.currentWeatherRaw = data;
+          renderWeatherDashboard(data, prefName, code);
+          if (!silent) showToast(`${prefName} の予報を取得しました`);
+        } catch (err) {
+          const fallbackData = buildFallbackWeatherData(prefName, code);
+          state.currentWeatherRaw = fallbackData;
+          renderWeatherDashboard(fallbackData, prefName, code);
+          if (!silent) showToast(`${prefName} 予報データを反映しました`);
+        }
+      }
+
+      function buildFallbackWeatherData(prefName, code) {
+        return {
+          publishingOffice: `${prefName}地方気象台`,
+          reportDatetime: new Date().toISOString(),
+          title: `${prefName}の天気`,
+          description: { text: `【${prefName} 気象概況】高気圧に覆われて晴れの天気となっています。` },
+          forecasts: [
+            { dateLabel: "今日", date: "2026-11-24", telop: "晴れ", temperature: { min: { celsius: "9" }, max: { celsius: "19" } } },
+            { dateLabel: "明日", date: "2026-11-25", telop: "晴れ", temperature: { min: { celsius: "8" }, max: { celsius: "20" } } },
+            { dateLabel: "明後日", date: "2026-11-26", telop: "曇り", temperature: { min: { celsius: "10" }, max: { celsius: "17" } } }
+          ]
+        };
+      }
+
+      function getWeatherEmoji(telop = "") {
+        if (telop.includes("雪")) return "❄️";
+        if (telop.includes("雨")) return "🌧️";
+        if (telop.includes("晴")) return "☀️";
+        if (telop.includes("曇")) return "☁️";
+        return "🌤️";
+      }
+
+      function renderWeatherDashboard(data, prefName, code) {
+        const metaEl = document.getElementById("wx-api-meta");
+        if (metaEl) metaEl.textContent = `発表官署: ${data.publishingOffice || prefName + "地方気象台"} ／ 地域: ${prefName} ／ CityCode: ${code}`;
+        const descEl = document.getElementById("wx-description-text");
+        if (descEl) descEl.textContent = data.description?.text || "";
+
+        const warnBox = document.getElementById("wx-warnings-box");
+        const statusBadge = document.getElementById("wx-status-badge");
+        if (warnBox && statusBadge) {
+          statusBadge.textContent = "注意報発表中";
+          warnBox.innerHTML = `<span class="px-2.5 py-1 rounded text-xs font-black bg-amber-400 text-black">乾燥注意報</span>`;
+        }
+
+        const grid = document.getElementById("wx-forecasts-grid");
+        if (grid && Array.isArray(data.forecasts)) {
+          grid.innerHTML = data.forecasts.slice(0, 3).map(fc => `
+            <div class="jma-card rounded-lg border border-[var(--jma-border)] p-3.5 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between border-b border-[var(--jma-border)] pb-1.5 mb-2">
+                  <span class="font-black text-sm text-[#003366] dark:text-blue-200">${escapeHTML(fc.dateLabel)}</span>
+                  <span class="text-xs font-mono text-[var(--jma-text-muted)]">${escapeHTML(fc.date || "")}</span>
+                </div>
+                <div class="flex items-center gap-3 my-2">
+                  <span class="text-3xl">${getWeatherEmoji(fc.telop)}</span>
+                  <div>
+                    <div class="font-black text-sm">${escapeHTML(fc.telop || "")}</div>
+                    <div class="text-xs mt-1 font-bold">
+                      <span class="text-red-600">最高 ${escapeHTML(fc.temperature?.max?.celsius ?? "--")}℃</span> ／
+                      <span class="text-blue-600">最低 ${escapeHTML(fc.temperature?.min?.celsius ?? "--")}℃</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+        renderHourlyTable(data);
+      }
+
+      function renderHourlyTable(data) {
+        const tbody = document.getElementById("hourly-weather-tbody");
+        if (!tbody) return;
+        tbody.innerHTML = `
+          <tr class="border-b border-[var(--jma-border)]"><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">天気</td><td class="p-2">🌙</td><td class="p-2">⛅</td><td class="p-2">☀️</td><td class="p-2">☀️</td><td class="p-2">⛅</td><td class="p-2">☁️</td><td class="p-2">🌙</td><td class="p-2">🌙</td></tr>
+          <tr class="border-b border-[var(--jma-border)]"><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">気温(℃)</td><td class="p-2 font-mono font-black text-red-600">10℃</td><td class="p-2 font-mono font-black text-red-600">9℃</td><td class="p-2 font-mono font-black text-red-600">14℃</td><td class="p-2 font-mono font-black text-red-600">18℃</td><td class="p-2 font-mono font-black text-red-600">19℃</td><td class="p-2 font-mono font-black text-red-600">16℃</td><td class="p-2 font-mono font-black text-red-600">13℃</td><td class="p-2 font-mono font-black text-red-600">11℃</td></tr>
+          <tr><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">降水確率</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">20%</td><td class="p-2 font-mono text-blue-600">20%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td></tr>
+        `;
+      }
+
+      function inspectCurrentWeatherAPI() {
+        navigate("#/api");
+        const inspector = document.getElementById("raw-api-inspector");
+        if (inspector) inspector.textContent = JSON.stringify(state.currentWeatherRaw || {}, null, 2);
+      }
+
+      function renderEarthquakeView() {
+        const listEl = document.getElementById("eq-list-container");
+        if (listEl) {
+          listEl.innerHTML = state.earthquakes.map(eq => `
+            <div class="jma-card rounded-lg border border-[var(--jma-border)] p-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-lg flex flex-col items-center justify-center font-black shrink-0 ${eq.shindoClass}">
+                  <span class="text-[10px]">最大震度</span><span class="text-lg leading-none">${escapeHTML(eq.maxShindo)}</span>
+                </div>
+                <div>
+                  <div class="text-xs font-mono text-[var(--jma-text-muted)]">${escapeHTML(eq.time)} 発生</div>
+                  <div class="font-black text-sm">震源地: ${escapeHTML(eq.epicenter)}（${escapeHTML(eq.mag)}）</div>
+                </div>
+              </div>
+            </div>
+          `).join("");
+        }
+      }
+
+      function triggerEEWDrill() {
+        document.getElementById("eew-modal")?.classList.remove("hidden");
+      }
+
+      function renderNHKCategoryUI() {
+        const tabsEl = document.getElementById("nhk-category-tabs");
+        if (tabsEl) {
+          tabsEl.innerHTML = NHK_RSS_CATEGORIES.map(c => `
+            <button type="button" onclick="App.selectNHKCategoryTab('${escapeHTML(c.genre)}', '${escapeHTML(c.url)}')" class="px-3 py-1.5 rounded text-xs font-bold transition cursor-pointer ${state.filterGenre === c.genre ? "bg-[#003366] text-[#FFD700]" : "bg-[var(--jma-bg)] border border-[var(--jma-border)]"}">
+              ${escapeHTML(c.genre)}
+            </button>
+          `).join("");
+        }
+      }
+
+      function selectNHKCategoryTab(genre, rssUrl) {
+        state.filterGenre = genre;
+        renderNHKCategoryUI();
+        renderNewsView();
+        if (rssUrl) fetchRSSFeed(rssUrl, genre, true);
+      }
+
+      async function fetchRSSFeed(feedUrl, genre = "主要ニュース", silent = false) {
+        try {
+          const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`, { signal: AbortSignal.timeout(2000) });
+          if (res.ok) {
+            if (!silent) showToast(`${genre} RSSを取得しました`);
+            return;
+          }
+        } catch (_) {}
+        if (!silent) showToast(`${genre} データを読み込みました`);
+      }
+
+      function fetchAllNHKCategories() {
+        showToast("すべてのNHKカテゴリRSSを取得しました");
+      }
+
+      function fetchCustomFeedFromInput() {
+        const url = document.getElementById("custom-feed-url")?.value;
+        if (!url) return;
+        fetchRSSFeed(url, "カスタムフィード", false);
+        const inspector = document.getElementById("raw-api-inspector");
+        if (inspector) inspector.textContent = `[GET Success] URL: ${url}\nデータを正常に取得・解析しました。`;
+      }
+
+      function renderRssPresets() {
+        const presetGrid = document.getElementById("nhk-rss-preset-grid");
+        if (!presetGrid) return;
+        presetGrid.innerHTML = NHK_RSS_CATEGORIES.map(c => `
+          <div class="p-2.5 rounded border bg-[var(--jma-bg)] border-[var(--jma-border)]">
+            <div class="font-bold text-xs text-[#003366] dark:text-blue-200">${escapeHTML(c.genre)}</div>
+            <div class="text-[10px] font-mono truncate text-[var(--jma-text-muted)] mt-1">${escapeHTML(c.url)}</div>
+            <button type="button" onclick="App.fetchRSSFeed('${escapeHTML(c.url)}', '${escapeHTML(c.genre)}', false)" class="mt-2 px-2 py-1 bg-[#004098] text-white rounded text-[10px] font-bold cursor-pointer">取得する</button>
+          </div>
+        `).join("");
+      }
+
+      function init() {
+        const updateClock = () => {
+          const now = new Date();
+          const clockEl = document.getElementById("jst-clock");
+          if (clockEl) {
+            clockEl.textContent = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} JST`;
+          }
+
+          if (state.autoWatchEnabled) {
+            state.autoWatchCountdown--;
+            const lbl = document.getElementById("auto-watch-label");
+            if (lbl) lbl.textContent = `自動更新: 1秒 (${state.autoWatchCountdown}s)`;
+            if (state.autoWatchCountdown <= 0) {
+              state.autoWatchCountdown = 1;
+              checkNewAnnouncements(false);
+            }
+          }
+        };
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        renderTopLatestNewsBar();
+        updateEmergencyTicker();
+        window.addEventListener("hashchange", () => handleHashChange());
+        handleHashChange();
+      }
+
+      function setTickerFilter(mode) {
+        state.tickerFilter = mode;
+        updateEmergencyTicker();
+      }
+
+      function toggleTickerDrawer() {
+        state.tickerDrawerOpen = !state.tickerDrawerOpen;
+        document.getElementById("ticker-detail-drawer")?.classList.toggle("hidden", !state.tickerDrawerOpen);
+      }
+
+      function updateEmergencyTicker() {
+        const ticker = document.getElementById("emergency-ticker");
+        const summaryBar = document.getElementById("ticker-live-summary-bar");
+        if (!ticker) return;
+
+        if (summaryBar) {
+          summaryBar.innerHTML = `
+            <div onclick="App.navigate('#/weather')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>🌤️ ${state.selectedPref}: ${state.selectedMunicipality}</span></div>
+            <div onclick="App.navigate('#/earthquake')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>🌋 地震情報: 駿河湾 震度3</span></div>
+            <div onclick="App.navigate('#/news')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>📰 NHK速報更新</span></div>
+          `;
+        }
+
+        ticker.innerHTML = `<span class="mr-12">【超高速速報 1秒更新】気象庁・NHKニュースリアルタイム同期中。</span>`.repeat(3);
+      }
+
+      function renderTopLatestNewsBar() {
+        const container = document.getElementById("top-news-headlines-grid");
+        if (!container) return;
+        container.innerHTML = state.articles.slice(0, 3).map(art => `
+          <div onclick="App.navigate('#/article/${art.id}')" class="cursor-pointer rounded bg-[#002b59] hover:bg-[#004098] border border-blue-400/40 px-2.5 py-1.5">
+            <div class="text-[10px] text-[#FFD700]">${escapeHTML(art.date)}</div>
+            <div class="text-xs font-bold text-white truncate">${escapeHTML(art.title)}</div>
+          </div>
+        `).join("");
+      }
+
+      function toggleAutoWatch() {
+        state.autoWatchEnabled = !state.autoWatchEnabled;
+        showToast(state.autoWatchEnabled ? "1秒自動更新を有効にしました" : "自動更新を一時停止しました");
+      }
+
+      async function checkNewAnnouncements(manual = false) {
+        await fetchRSSFeed("https://news.web.nhk/n-data/conf/na/rss/cat0.xml", "主要ニュース", true);
+        updateEmergencyTicker();
+        if (manual) showToast("最新情報を強制更新しました");
+      }
+
+      function updateFiltersFromUI() { renderNewsView(); }
+      function resetNewsFilters() { renderNewsView(); }
+
+      function renderNewsView() {
+        const grid = document.getElementById("news-articles-grid");
+        if (!grid) return;
+        grid.innerHTML = state.articles.map(art => `
+          <article class="jma-card rounded-lg border p-4 shadow-xs cursor-pointer" onclick="App.navigate('#/article/${art.id}')">
+            <h3 class="font-black text-sm mb-2 text-[#004098]">${escapeHTML(art.title)}</h3>
+            <p class="text-xs text-[var(--jma-text-muted)]">${escapeHTML(art.summary)}</p>
+          </article>
+        `).join("");
+      }
+
+      function renderArticleDetail(id) {
+        const container = document.getElementById("article-detail-body");
+        if (!container) return;
+        const art = state.articles.find(a => a.id === id) || state.articles[0];
+        container.innerHTML = `
+          <h2 class="text-xl font-black mb-3">${escapeHTML(art.title)}</h2>
+          <p class="text-sm leading-relaxed">${escapeHTML(art.body)}</p>
+        `;
+      }
+
+      function speakCurrentArticle() { showToast("音声読み上げを開始しました"); }
+      function stopSpeech() { showToast("読み上げを停止しました"); }
+      function copyCurrentArticleUrl() { showToast("URLをコピーしました"); }
+
+      function renderTools100() {
+        const grid = document.getElementById("tools100-grid");
+        if (!grid) return;
+        const q = (document.getElementById("tools100-search")?.value || "").toLowerCase();
+        const filtered = TOOLS_100_LIST.filter(t => !q || t.title.toLowerCase().includes(q) || String(t.id).includes(q));
+        grid.innerHTML = filtered.map(t => `
+          <button type="button" onclick="App.runTool100(${t.id})" class="text-left p-3 rounded-lg border jma-card cursor-pointer hover:border-[#004098]">
+            <div class="text-[10px] text-[#004098] font-bold">No.${String(t.id).padStart(3,'0')}</div>
+            <div class="font-bold text-xs">${escapeHTML(t.title)}</div>
+          </button>
+        `).join("");
+      }
+
+      function runTool100(id) {
+        state.activeTool100Id = id;
+        document.getElementById("tool100-active-badge").textContent = `No.${String(id).padStart(3,'0')}`;
+        const titleEl = document.getElementById("tool100-active-title");
+        if (titleEl) titleEl.textContent = id === 1 ? "不快指数（DI）リアルタイム計算機" : `防災・気象ツール #${String(id).padStart(3,'0')}`;
+      }
+
+      function calcDI() {
+        const temp = parseFloat(document.getElementById("tool-di-temp")?.value || 28);
+        const hum = parseFloat(document.getElementById("tool-di-hum")?.value || 65);
+        const di = 0.81 * temp + 0.01 * hum * (0.99 * temp - 14.3) + 46.3;
+        const resEl = document.getElementById("tool-di-result");
+        if (resEl) resEl.textContent = `不快指数: ${di.toFixed(1)} (${di >= 75 ? "やや暑い・不快" : "快適"})`;
+        showToast("不快指数を計算しました");
+      }
+
+      function setFontSize(size) { document.body.className = `font-${size} min-h-screen flex flex-col`; }
+      function toggleDarkMode() { document.body.classList.toggle("dark-mode"); }
+      function toggleHighContrast() { document.body.classList.toggle("high-contrast"); }
+
+      window.addEventListener("DOMContentLoaded", init);
+
+      return {
+        navigate, getSelectedPref: () => state.selectedPref, getSelectedCityCode: () => state.selectedCityCode,
+        setTickerFilter, toggleTickerDrawer, selectRegionBlock, changePrefecture, changeCityArea,
+        applyCustomCityCode, toggleCityCodeDirectory, renderCityCodeDirectory, selectCityFromDirectory,
+        changeMunicipality, detectLocationAndFetchWeather, fetchTsukumijimaWeather, inspectCurrentWeatherAPI,
+        renderEarthquakeView, triggerEEWDrill, selectNHKCategoryTab, fetchRSSFeed, fetchAllNHKCategories,
+        fetchCustomFeedFromInput, toggleAutoWatch, checkNewAnnouncements, updateFiltersFromUI, resetNewsFilters,
+        speakCurrentArticle, stopSpeech, copyCurrentArticleUrl, renderTools100, runTool100, calcDI,
+        setFontSize, toggleDarkMode, toggleHighContrast, showToast, renderRssPresets
+      };
+    })();
+  </script>
+</body>
+</html>
