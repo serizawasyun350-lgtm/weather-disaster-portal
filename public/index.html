@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>気象・地震・防災・NHKニュース 総合情報ポータル（気象庁デザイン準拠）</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -69,7 +70,7 @@
       border-color: var(--jma-border);
     }
 
-    /* 緊急速報ティッカーアニメーション（1秒間隔の即時更新） */
+    /* 緊急速報ティッカーアニメーション */
     @keyframes tickerMove {
       0% { transform: translateX(0%); }
       100% { transform: translateX(-50%); }
@@ -126,11 +127,11 @@
     </div>
   </section>
 
-  <!-- 緊急防災速報ティッカー＆リアルタイムパネル（1秒自動更新） -->
+  <!-- 緊急防災速報ティッカー＆リアルタイムパネル（5分ごとのニュース自動確認） -->
   <div class="bg-[#8b0000] text-white text-xs font-bold py-2 px-3 border-b-2 border-red-400 relative z-40 overflow-hidden shadow-md">
     <div class="max-w-7xl mx-auto space-y-2">
       <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-        <span class="bg-[#FFD700] text-black px-2.5 py-0.5 rounded font-black shrink-0 animate-pulse">防災・気象速報 (1秒更新)</span>
+        <span class="bg-[#FFD700] text-black px-2.5 py-0.5 rounded font-black shrink-0 animate-pulse">防災・気象速報（5分ごと確認）</span>
         <div class="overflow-hidden flex-1 min-w-[200px] bg-black/25 px-2 py-1 rounded border border-red-400/40">
           <div id="emergency-ticker" class="ticker-track">
             <span class="mr-12">【気象情報】最新の天気予報・警報注意報およびNHKニュースを高速読み込み中...</span>
@@ -174,7 +175,7 @@
         <div class="flex flex-wrap items-center gap-2 text-xs">
           <button type="button" id="btn-auto-watch" onclick="App.toggleAutoWatch()" class="px-2.5 py-1.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-bold border border-emerald-400 flex items-center gap-1.5 shadow-sm transition cursor-pointer">
             <span id="auto-watch-dot" class="w-2 h-2 rounded-full bg-lime-300 animate-ping"></span>
-            <span id="auto-watch-label">自動更新: 1秒 (ON)</span>
+            <span id="auto-watch-label">自動更新: 5分 (ON)</span>
           </button>
           <div class="bg-[#002244] border border-blue-400/50 px-2.5 py-1.5 rounded font-mono font-bold text-[#FFD700]" id="jst-clock">
             2026/11/24 15:18:00 JST
@@ -329,9 +330,10 @@
               <h3 class="jma-section-title text-sm">時系列 気温（℃）・降水確率（%）推移チャート</h3>
               <span class="text-xs text-[var(--jma-text-muted)]">3時間ごと予測モデル</span>
             </div>
-            <div class="w-full h-48 relative">
-              <canvas id="weather-chart-canvas"></canvas>
+            <div class="w-full h-64 relative">
+              <canvas id="weather-chart-canvas" aria-label="気温と降水確率の時間別推移グラフ"></canvas>
             </div>
+            <p id="weather-chart-status" class="text-xs text-[var(--jma-text-muted)] mt-2" aria-live="polite">時間別データを取得しています...</p>
           </div>
         </div>
       </div>
@@ -377,11 +379,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div class="p-3 rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-400">
             <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300">🌊 津波予報・警報発表状況</div>
-            <div class="text-sm font-black mt-1 text-emerald-950 dark:text-white">現在、津波警報・注意報は発表されていません。</div>
+            <div class="text-sm font-black mt-1 text-emerald-950 dark:text-white">最新の津波警報・注意報は公式情報で確認してください。</div>
           </div>
           <div class="p-3 rounded bg-orange-50 dark:bg-orange-950/40 border border-orange-400">
             <div class="text-xs font-bold text-orange-800 dark:text-orange-300">🌋 噴火警報・火口周辺警報</div>
-            <div class="text-sm font-black mt-1 text-orange-950 dark:text-white">桜島・諏訪之瀬島（レベル3入山規制）、富士山（レベル1）</div>
+            <div class="text-sm font-black mt-1 text-orange-950 dark:text-white">最新の噴火警報・警戒レベルは気象庁公式情報を確認してください。</div>
           </div>
           <div class="p-3 rounded bg-[var(--jma-sky)] border border-[var(--jma-border)]">
             <label for="eq-shindo-filter" class="block text-xs font-bold mb-1">最大震度で絞り込み:</label>
@@ -586,7 +588,7 @@
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       <div>
         <div class="font-black text-white text-sm mb-1">気象・地震・防災・NHKニュース 総合情報ポータル</div>
-        <p class="text-blue-300">気象庁配色準拠UI ／ 1秒自動更新対応</p>
+        <p class="text-blue-300">気象庁配色準拠UI ／ 5分ごとのニュース自動確認</p>
       </div>
     </div>
   </footer>
@@ -644,28 +646,26 @@
         { id: "cat0", genre: "主要ニュース", url: "https://news.web.nhk/n-data/conf/na/rss/cat0.xml" },
         { id: "cat1", genre: "社会", url: "https://news.web.nhk/n-data/conf/na/rss/cat1.xml" },
         { id: "cat2", genre: "文化・エンタメ", url: "https://news.web.nhk/n-data/conf/na/rss/cat2.xml" },
-        { id: "cat3", genre: "科学・医療", url: "https://news.web.nhk/n-data/conf/na/rss/cat3.xml" }
+        { id: "cat3", genre: "科学・医療", url: "https://news.web.nhk/n-data/conf/na/rss/cat3.xml" },
+        { id: "cat4", genre: "政治", url: "https://news.web.nhk/n-data/conf/na/rss/cat4.xml" },
+        { id: "cat5", genre: "経済", url: "https://news.web.nhk/n-data/conf/na/rss/cat5.xml" },
+        { id: "cat6", genre: "国際", url: "https://news.web.nhk/n-data/conf/na/rss/cat6.xml" },
+        { id: "cat7", genre: "スポーツ", url: "https://news.web.nhk/n-data/conf/na/rss/cat7.xml" }
       ];
 
-      const INITIAL_EARTHQUAKES = [
-        { id: "eq1", time: "2026/11/24 14:42", epicenter: "駿河湾", mag: "M4.3", maxShindo: "3", shindoClass: "shindo-3" },
-        { id: "eq2", time: "2026/11/24 11:18", epicenter: "茨城県沖", mag: "M4.8", maxShindo: "4", shindoClass: "shindo-4" }
+      // Open-Meteo用の代表座標。市エリアコードがある地域はCITY_COORDSを優先。
+      const PREF_COORDS = [
+        {pref:"北海道",lat:43.06,lng:141.35},{pref:"青森",lat:40.82,lng:140.74},{pref:"岩手",lat:39.70,lng:141.15},{pref:"宮城",lat:38.27,lng:140.87},{pref:"秋田",lat:39.72,lng:140.10},{pref:"山形",lat:38.24,lng:140.36},{pref:"福島",lat:37.75,lng:140.47},{pref:"茨城",lat:36.34,lng:140.45},{pref:"栃木",lat:36.57,lng:139.88},{pref:"群馬",lat:36.39,lng:139.06},{pref:"埼玉",lat:35.86,lng:139.65},{pref:"千葉",lat:35.61,lng:140.12},{pref:"東京",lat:35.68,lng:139.69},{pref:"神奈川",lat:35.45,lng:139.64},{pref:"新潟",lat:37.90,lng:139.02},{pref:"富山",lat:36.70,lng:137.21},{pref:"石川",lat:36.59,lng:136.63},{pref:"福井",lat:36.06,lng:136.22},{pref:"山梨",lat:35.66,lng:138.57},{pref:"長野",lat:36.65,lng:138.18},{pref:"岐阜",lat:35.42,lng:136.76},{pref:"静岡",lat:34.98,lng:138.38},{pref:"愛知",lat:35.18,lng:136.91},{pref:"三重",lat:34.73,lng:136.51},{pref:"滋賀",lat:35.00,lng:135.87},{pref:"京都",lat:35.02,lng:135.76},{pref:"大阪",lat:34.69,lng:135.50},{pref:"兵庫",lat:34.69,lng:135.18},{pref:"奈良",lat:34.69,lng:135.83},{pref:"和歌山",lat:34.23,lng:135.17},{pref:"鳥取",lat:35.50,lng:134.24},{pref:"島根",lat:35.47,lng:133.05},{pref:"岡山",lat:34.66,lng:133.93},{pref:"広島",lat:34.40,lng:132.46},{pref:"山口",lat:34.19,lng:131.47},{pref:"徳島",lat:34.07,lng:134.56},{pref:"香川",lat:34.34,lng:134.04},{pref:"愛媛",lat:33.84,lng:132.77},{pref:"高知",lat:33.56,lng:133.53},{pref:"福岡",lat:33.59,lng:130.40},{pref:"佐賀",lat:33.25,lng:130.30},{pref:"長崎",lat:32.75,lng:129.87},{pref:"熊本",lat:32.80,lng:130.71},{pref:"大分",lat:33.24,lng:131.61},{pref:"宮崎",lat:31.91,lng:131.42},{pref:"鹿児島",lat:31.56,lng:130.56},{pref:"沖縄",lat:26.21,lng:127.68}
       ];
+      const CITY_COORDS = {"220010":{lat:34.98,lng:138.38},"220040":{lat:35.10,lng:138.86},"220030":{lat:34.71,lng:137.73},"220020":{lat:34.97,lng:139.09}};
 
-      const INITIAL_ARTICLES = [
-        {
-          id: 101,
-          title: "太平洋側を中心に晴天続く 朝晩の冷え込みと乾燥に注意 気象庁",
-          genre: "主要ニュース",
-          date: "2026-11-24 15:00",
-          summary: "高気圧に覆われ太平洋側では晴れる所が多くなっています。",
-          body: "気象庁によりますと、本州付近は移動性高気圧に覆われ晴れています。"
-        }
-      ];
+      const INITIAL_EARTHQUAKES = [];
+
+      const INITIAL_ARTICLES = [];
 
       const TOOLS_100_LIST = Array.from({ length: 100 }, (_, idx) => ({
         id: idx + 1,
-        title: idx === 0 ? "不快指数（DI）計算機" : `防災・気象ツール #${String(idx + 1).padStart(3, '0')}`,
+        title: idx === 0 ? "不快指数（DI）計算機" : `準備中の機能 #${String(idx + 1).padStart(3, '0')}`,
         cat: "ユーティリティ",
         desc: "気象・防災データを処理する機能です。"
       }));
@@ -682,7 +682,7 @@
         filterGenre: "すべて",
         activeArticleId: 101,
         autoWatchEnabled: true,
-        autoWatchCountdown: 1,
+        autoWatchCountdown: 300,
         activeTool100Id: 1,
         tickerFilter: "all",
         tickerDrawerOpen: false
@@ -765,6 +765,7 @@
         } else if (routeName === "news") {
           renderNHKCategoryUI();
           renderNewsView();
+          if (state.articles.length === 0) fetchAllNHKCategories();
         } else if (routeName === "article") {
           renderArticleDetail(state.activeArticleId);
         } else if (routeName === "api") {
@@ -966,7 +967,7 @@
 
         try {
           const fetchPromise = fetch(apiUrl);
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
           const res = await Promise.race([fetchPromise, timeoutPromise]);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
@@ -982,15 +983,21 @@
       }
 
       function buildFallbackWeatherData(prefName, code) {
+        const today = new Date();
+        const dateAt = offset => {
+          const d = new Date(today);
+          d.setDate(d.getDate() + offset);
+          return d.toISOString().slice(0,10);
+        };
         return {
-          publishingOffice: `${prefName}地方気象台`,
-          reportDatetime: new Date().toISOString(),
+          publishingOffice: `${prefName}地方気象台（代替表示）`,
+          reportDatetime: today.toISOString(),
           title: `${prefName}の天気`,
-          description: { text: `【${prefName} 気象概況】高気圧に覆われて晴れの天気となっています。` },
+          description: { text: `【${prefName}】天気予報APIに接続できませんでした。表示中の気温は予報値ではありません。再取得してください。` },
           forecasts: [
-            { dateLabel: "今日", date: "2026-11-24", telop: "晴れ", temperature: { min: { celsius: "9" }, max: { celsius: "19" } } },
-            { dateLabel: "明日", date: "2026-11-25", telop: "晴れ", temperature: { min: { celsius: "8" }, max: { celsius: "20" } } },
-            { dateLabel: "明後日", date: "2026-11-26", telop: "曇り", temperature: { min: { celsius: "10" }, max: { celsius: "17" } } }
+            { dateLabel: "今日（代替）", date: dateAt(0), telop: "データなし", temperature: { min: { celsius: "--" }, max: { celsius: "--" } } },
+            { dateLabel: "明日（代替）", date: dateAt(1), telop: "データなし", temperature: { min: { celsius: "--" }, max: { celsius: "--" } } },
+            { dateLabel: "明後日（代替）", date: dateAt(2), telop: "データなし", temperature: { min: { celsius: "--" }, max: { celsius: "--" } } }
           ]
         };
       }
@@ -1012,8 +1019,9 @@
         const warnBox = document.getElementById("wx-warnings-box");
         const statusBadge = document.getElementById("wx-status-badge");
         if (warnBox && statusBadge) {
-          statusBadge.textContent = "注意報発表中";
-          warnBox.innerHTML = `<span class="px-2.5 py-1 rounded text-xs font-black bg-amber-400 text-black">乾燥注意報</span>`;
+          statusBadge.textContent = "公式警報API未接続";
+          statusBadge.className = "px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-700 border border-slate-300";
+          warnBox.innerHTML = `<span class="text-xs text-[var(--jma-text-muted)]">警報・注意報のリアルタイム取得には気象庁防災情報APIの接続が必要です。未確認の警報は表示しません。</span>`;
         }
 
         const grid = document.getElementById("wx-forecasts-grid");
@@ -1039,17 +1047,79 @@
             </div>
           `).join("");
         }
-        renderHourlyTable(data);
+        fetchHourlyWeather(prefName, code);
       }
 
-      function renderHourlyTable(data) {
+      function getWeatherCoordinates(prefName, code) {
+        if (CITY_COORDS[code]) return CITY_COORDS[code];
+        const found = PREF_COORDS.find(item => item.pref === prefName);
+        return found ? {lat: found.lat, lng: found.lng} : CITY_COORDS["220010"];
+      }
+
+      let weatherChart = null;
+      async function fetchHourlyWeather(prefName, code) {
+        const status = document.getElementById("weather-chart-status");
+        if (status) status.textContent = `${prefName}の時間別データを取得中...`;
+        const {lat, lng} = getWeatherCoordinates(prefName, code);
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation_probability&forecast_days=2&timezone=Asia%2FTokyo`;
+        try {
+          const response = await fetch(url, {signal: AbortSignal.timeout(12000)});
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (!data.hourly?.time?.length) throw new Error("時間別データがありません");
+          renderHourlyTable(data.hourly);
+          renderWeatherChart(data.hourly);
+          if (status) status.textContent = `データ提供: Open-Meteo ／ ${prefName} ／ 取得: ${new Date().toLocaleTimeString("ja-JP")}`;
+        } catch (error) {
+          if (status) status.textContent = `時間別データを取得できませんでした: ${error.message}`;
+          if (weatherChart) { weatherChart.destroy(); weatherChart = null; }
+          const tbody = document.getElementById("hourly-weather-tbody");
+          if (tbody) tbody.innerHTML = `<tr><td colspan="9" class="p-3 text-slate-500">時間別データを取得できません。</td></tr>`;
+        }
+      }
+
+      function renderWeatherChart(hourly) {
+        const canvas = document.getElementById("weather-chart-canvas");
+        if (!canvas || !window.Chart) {
+          const status = document.getElementById("weather-chart-status");
+          if (status) status.textContent = "グラフライブラリを読み込めません。ページを再読み込みしてください。";
+          return;
+        }
+        const now = Date.now();
+        const points = hourly.time.map((time, i) => ({time, i})).filter(x => new Date(x.time).getTime() >= now - 3600000).slice(0, 24);
+        const labels = points.map(x => new Date(x.time).toLocaleString("ja-JP", {month:"numeric",day:"numeric",hour:"2-digit"}));
+        if (weatherChart) weatherChart.destroy();
+        weatherChart = new Chart(canvas.getContext("2d"), {
+          type: "line",
+          data: {labels, datasets: [
+            {label:"気温 (℃)",data:points.map(x=>hourly.temperature_2m[x.i]),yAxisID:"yTemp",borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.12)",tension:.3,pointRadius:2},
+            {label:"降水確率 (%)",data:points.map(x=>hourly.precipitation_probability[x.i]),yAxisID:"yRain",borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.10)",tension:.3,pointRadius:2}
+          ]},
+          options: {responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+            plugins:{legend:{display:true,position:"bottom"}},
+            scales:{x:{ticks:{maxTicksLimit:8,maxRotation:0}},
+              yTemp:{type:"linear",position:"left",title:{display:true,text:"気温 (℃)"}},
+              yRain:{type:"linear",position:"right",min:0,max:100,title:{display:true,text:"降水確率 (%)"},grid:{drawOnChartArea:false}}}}
+        });
+      }
+
+      function renderHourlyTable(hourly) {
         const tbody = document.getElementById("hourly-weather-tbody");
         if (!tbody) return;
-        tbody.innerHTML = `
-          <tr class="border-b border-[var(--jma-border)]"><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">天気</td><td class="p-2">🌙</td><td class="p-2">⛅</td><td class="p-2">☀️</td><td class="p-2">☀️</td><td class="p-2">⛅</td><td class="p-2">☁️</td><td class="p-2">🌙</td><td class="p-2">🌙</td></tr>
-          <tr class="border-b border-[var(--jma-border)]"><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">気温(℃)</td><td class="p-2 font-mono font-black text-red-600">10℃</td><td class="p-2 font-mono font-black text-red-600">9℃</td><td class="p-2 font-mono font-black text-red-600">14℃</td><td class="p-2 font-mono font-black text-red-600">18℃</td><td class="p-2 font-mono font-black text-red-600">19℃</td><td class="p-2 font-mono font-black text-red-600">16℃</td><td class="p-2 font-mono font-black text-red-600">13℃</td><td class="p-2 font-mono font-black text-red-600">11℃</td></tr>
-          <tr><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">降水確率</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">20%</td><td class="p-2 font-mono text-blue-600">20%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td><td class="p-2 font-mono text-blue-600">10%</td></tr>
-        `;
+        if (!hourly?.time?.length) {
+          tbody.innerHTML = `<tr><td colspan="9" class="p-3 text-slate-500">時間別データを取得できません。</td></tr>`;
+          return;
+        }
+        const now = Date.now();
+        const rows = hourly.time.map((time, i) => ({time, i})).filter(x => new Date(x.time).getTime() >= now - 3600000).slice(0, 8);
+        const headers = rows.map(x => `<th class="p-2 border border-blue-800">${new Date(x.time).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</th>`).join("");
+        const dates = rows.map(x => `<td class="p-2">${new Date(x.time).toLocaleDateString("ja-JP",{month:"numeric",day:"numeric"})}</td>`).join("");
+        const temps = rows.map(x => `<td class="p-2 font-mono font-black text-red-600">${hourly.temperature_2m[x.i] ?? "--"}℃</td>`).join("");
+        const rain = rows.map(x => `<td class="p-2 font-mono text-blue-600">${hourly.precipitation_probability[x.i] ?? "--"}%</td>`).join("");
+        tbody.innerHTML = `<tr class="bg-[#003366] text-white"><th class="p-2 text-left">時刻</th>${headers}</tr>
+          <tr><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">日付</td>${dates}</tr>
+          <tr><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">気温(℃)</td>${temps}</tr>
+          <tr><td class="p-2 font-bold text-left bg-[var(--jma-sky)]">降水確率</td>${rain}</tr>`;
       }
 
       function inspectCurrentWeatherAPI() {
@@ -1061,7 +1131,7 @@
       function renderEarthquakeView() {
         const listEl = document.getElementById("eq-list-container");
         if (listEl) {
-          listEl.innerHTML = state.earthquakes.map(eq => `
+          listEl.innerHTML = state.earthquakes.length ? state.earthquakes.map(eq => `
             <div class="jma-card rounded-lg border border-[var(--jma-border)] p-3 flex items-center justify-between gap-3">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-lg flex flex-col items-center justify-center font-black shrink-0 ${eq.shindoClass}">
@@ -1073,7 +1143,7 @@
                 </div>
               </div>
             </div>
-          `).join("");
+          `).join("") : `<div class="jma-card rounded-lg border p-4 text-sm text-[var(--jma-text-muted)]">地震情報のリアルタイムAPIはまだ接続されていません。最新の発表は気象庁・NHK公式情報を確認してください。</div>`;
         }
       }
 
@@ -1094,32 +1164,86 @@
 
       function selectNHKCategoryTab(genre, rssUrl) {
         state.filterGenre = genre;
+        const filter = document.getElementById("news-genre-select");
+        if (filter) filter.value = genre;
         renderNHKCategoryUI();
         renderNewsView();
-        if (rssUrl) fetchRSSFeed(rssUrl, genre, true);
+        if (rssUrl) fetchRSSFeed(rssUrl, genre, true).catch(() => {});
+      }
+
+      function getGenreForFeed(feedUrl, fallbackGenre) {
+        const match = String(feedUrl).match(/cat([0-7])\.xml/i);
+        if (!match) return fallbackGenre || "主要ニュース";
+        return NHK_RSS_CATEGORIES.find(c => c.id === `cat${match[1]}`)?.genre || fallbackGenre;
       }
 
       async function fetchRSSFeed(feedUrl, genre = "主要ニュース", silent = false) {
+        const status = document.getElementById("api-fetch-status");
         try {
-          const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`, { signal: AbortSignal.timeout(2000) });
-          if (res.ok) {
-            if (!silent) showToast(`${genre} RSSを取得しました`);
-            return;
+          const match = String(feedUrl).match(/cat([0-7])\.xml/i);
+          const query = match ? `category=cat${match[1]}` : `url=${encodeURIComponent(feedUrl)}`;
+          const response = await fetch(`/api/nhk-rss?${query}`, {signal: AbortSignal.timeout(15000)});
+          if (!response.ok) {
+            const details = await response.json().catch(() => ({}));
+            throw new Error(details.error || `HTTP ${response.status}`);
           }
-        } catch (_) {}
-        if (!silent) showToast(`${genre} データを読み込みました`);
+          const xmlText = await response.text();
+          const xml = new DOMParser().parseFromString(xmlText, "text/xml");
+          if (xml.querySelector("parsererror")) throw new Error("RSSのXML解析に失敗しました");
+          const items = [...xml.querySelectorAll("item")];
+          if (!items.length) throw new Error("RSSに記事がありません");
+          const actualGenre = getGenreForFeed(feedUrl, genre);
+          let added = 0;
+          for (const item of items) {
+            const title = item.querySelector("title")?.textContent?.trim();
+            const link = item.querySelector("link")?.textContent?.trim();
+            const pubDate = item.querySelector("pubDate")?.textContent?.trim() || "";
+            const desc = item.querySelector("description")?.textContent?.trim() || "";
+            let safeLink;
+            try {
+              safeLink = new URL(link);
+              if (safeLink.protocol !== "https:" || !/(^|\\.)nhk\\.or\\.jp$/i.test(safeLink.hostname)) continue;
+            } catch (_) { continue; }
+            if (!title || !link || state.articles.some(a => a.url === safeLink.href)) continue;
+            const dateObj = pubDate ? new Date(pubDate) : new Date();
+            const dateText = Number.isNaN(dateObj.getTime()) ? pubDate : dateObj.toLocaleString("ja-JP");
+            const summary = desc.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").trim();
+            state.articles.push({id:Date.now()+added,title,genre:actualGenre,date:dateText,summary:summary.slice(0,500),body:summary,url:safeLink.href});
+            added++;
+          }
+          state.articles.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          if (state.articles.length > 120) state.articles.length = 120;
+          renderTopLatestNewsBar();
+          updateEmergencyTicker();
+          if (state.route === "news") renderNewsView();
+          if (status) status.textContent = `取得成功: ${actualGenre} ${items.length}件`;
+          if (!silent) showToast(`${actualGenre}: ${items.length}件のRSS記事を取得しました`);
+          return items.length;
+        } catch (error) {
+          if (status) status.textContent = `取得失敗: ${error.message}`;
+          if (!silent) showToast(`${genre} RSS取得失敗: ${error.message}`);
+          throw error;
+        }
       }
 
-      function fetchAllNHKCategories() {
-        showToast("すべてのNHKカテゴリRSSを取得しました");
+      async function fetchAllNHKCategories() {
+        const results = await Promise.allSettled(NHK_RSS_CATEGORIES.map(c => fetchRSSFeed(c.url,c.genre,true)));
+        const success = results.filter(r => r.status === "fulfilled").length;
+        showToast(`NHK RSS取得完了: ${success}/${NHK_RSS_CATEGORIES.length}カテゴリ`);
+        renderNewsView();
       }
 
-      function fetchCustomFeedFromInput() {
-        const url = document.getElementById("custom-feed-url")?.value;
-        if (!url) return;
-        fetchRSSFeed(url, "カスタムフィード", false);
+      async function fetchCustomFeedFromInput() {
+        const url = document.getElementById("custom-feed-url")?.value?.trim();
+        const genre = document.getElementById("custom-feed-genre")?.value || "カスタムフィード";
         const inspector = document.getElementById("raw-api-inspector");
-        if (inspector) inspector.textContent = `[GET Success] URL: ${url}\nデータを正常に取得・解析しました。`;
+        if (inspector) inspector.textContent = "取得中...";
+        try {
+          await fetchRSSFeed(url,genre,false);
+          if (inspector) inspector.textContent = "RSSを取得して記事一覧に反映しました。";
+        } catch (error) {
+          if (inspector) inspector.textContent = `取得失敗: ${error.message}`;
+        }
       }
 
       function renderRssPresets() {
@@ -1145,9 +1269,9 @@
           if (state.autoWatchEnabled) {
             state.autoWatchCountdown--;
             const lbl = document.getElementById("auto-watch-label");
-            if (lbl) lbl.textContent = `自動更新: 1秒 (${state.autoWatchCountdown}s)`;
+            if (lbl) lbl.textContent = `自動更新: ${Math.floor(state.autoWatchCountdown / 60)}分${state.autoWatchCountdown % 60}秒`;
             if (state.autoWatchCountdown <= 0) {
-              state.autoWatchCountdown = 1;
+              state.autoWatchCountdown = 300;
               checkNewAnnouncements(false);
             }
           }
@@ -1159,6 +1283,7 @@
         updateEmergencyTicker();
         window.addEventListener("hashchange", () => handleHashChange());
         handleHashChange();
+        checkNewAnnouncements(false);
       }
 
       function setTickerFilter(mode) {
@@ -1169,68 +1294,97 @@
       function toggleTickerDrawer() {
         state.tickerDrawerOpen = !state.tickerDrawerOpen;
         document.getElementById("ticker-detail-drawer")?.classList.toggle("hidden", !state.tickerDrawerOpen);
+        if (state.tickerDrawerOpen) updateEmergencyTicker();
       }
 
       function updateEmergencyTicker() {
         const ticker = document.getElementById("emergency-ticker");
         const summaryBar = document.getElementById("ticker-live-summary-bar");
         if (!ticker) return;
-
-        if (summaryBar) {
-          summaryBar.innerHTML = `
-            <div onclick="App.navigate('#/weather')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>🌤️ ${state.selectedPref}: ${state.selectedMunicipality}</span></div>
-            <div onclick="App.navigate('#/earthquake')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>🌋 地震情報: 駿河湾 震度3</span></div>
-            <div onclick="App.navigate('#/news')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1"><span>📰 NHK速報更新</span></div>
-          `;
-        }
-
-        ticker.innerHTML = `<span class="mr-12">【超高速速報 1秒更新】気象庁・NHKニュースリアルタイム同期中。</span>`.repeat(3);
+        const latest = state.articles.slice(0,5);
+        if (summaryBar) summaryBar.innerHTML = `
+          <div onclick="App.navigate('#/weather')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1">🌤️ 天気: ${escapeHTML(state.selectedPref)} ${escapeHTML(state.selectedMunicipality)}</div>
+          <div onclick="App.navigate('#/earthquake')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1">🌋 地震: 最新情報は公式発表を確認してください</div>
+          <div onclick="App.navigate('#/news')" class="cursor-pointer bg-black/30 rounded px-2.5 py-1">📰 NHKニュース: ${latest.length ? `${latest.length}件取得済み` : "取得待ち"}</div>`;
+        const tickerText = latest.length ? latest.map(a => `【NHK】${escapeHTML(a.title)}`).join("　◆　") : "NHKニュースを取得しています。";
+        ticker.innerHTML = `<span class="mr-12">${tickerText}</span><span class="mr-12">${tickerText}</span>`;
+        const drawer = document.getElementById("ticker-detail-drawer");
+        if (drawer && state.tickerDrawerOpen) drawer.innerHTML = latest.length
+          ? latest.map(a => `<div class="border-b border-red-300/30 py-1"><a href="${escapeHTML(a.url || "#/news")}" target="_blank" rel="noopener noreferrer" class="hover:underline">${escapeHTML(a.title)}</a></div>`).join("")
+          : `<div>ニュースを取得していません。</div>`;
       }
 
       function renderTopLatestNewsBar() {
         const container = document.getElementById("top-news-headlines-grid");
         if (!container) return;
         container.innerHTML = state.articles.slice(0, 3).map(art => `
-          <div onclick="App.navigate('#/article/${art.id}')" class="cursor-pointer rounded bg-[#002b59] hover:bg-[#004098] border border-blue-400/40 px-2.5 py-1.5">
+          <a href="${escapeHTML(art.url || "#/news")}" target="_blank" rel="noopener noreferrer" class="block rounded bg-[#002b59] hover:bg-[#004098] border border-blue-400/40 px-2.5 py-1.5">
             <div class="text-[10px] text-[#FFD700]">${escapeHTML(art.date)}</div>
             <div class="text-xs font-bold text-white truncate">${escapeHTML(art.title)}</div>
-          </div>
-        `).join("");
+          </a>`).join("") || `<div class="text-xs text-blue-100">最新ニュースを取得しています...</div>`;
       }
 
       function toggleAutoWatch() {
         state.autoWatchEnabled = !state.autoWatchEnabled;
-        showToast(state.autoWatchEnabled ? "1秒自動更新を有効にしました" : "自動更新を一時停止しました");
+        showToast(state.autoWatchEnabled ? "5分ごとのニュース自動確認を有効にしました" : "自動更新を一時停止しました");
       }
 
       async function checkNewAnnouncements(manual = false) {
-        await fetchRSSFeed("https://news.web.nhk/n-data/conf/na/rss/cat0.xml", "主要ニュース", true);
-        updateEmergencyTicker();
-        if (manual) showToast("最新情報を強制更新しました");
+        try {
+          await fetchRSSFeed("https://news.web.nhk/n-data/conf/na/rss/cat0.xml","主要ニュース",true);
+          updateEmergencyTicker();
+          if (manual) showToast("最新ニュースを更新しました");
+        } catch (error) {
+          if (manual) showToast(`ニュース更新に失敗しました: ${error.message}`);
+        }
       }
 
       function updateFiltersFromUI() { renderNewsView(); }
-      function resetNewsFilters() { renderNewsView(); }
+      function resetNewsFilters() {
+        ["news-genre-select","news-year-select","news-month-select","news-keyword-input"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = id.includes("select") ? "すべて" : "";
+        });
+        renderNewsView();
+      }
 
       function renderNewsView() {
         const grid = document.getElementById("news-articles-grid");
         if (!grid) return;
-        grid.innerHTML = state.articles.map(art => `
-          <article class="jma-card rounded-lg border p-4 shadow-xs cursor-pointer" onclick="App.navigate('#/article/${art.id}')">
+        const genre = document.getElementById("news-genre-select")?.value || "すべて";
+        const year = document.getElementById("news-year-select")?.value || "すべて";
+        const month = document.getElementById("news-month-select")?.value || "すべて";
+        const keyword = (document.getElementById("news-keyword-input")?.value || "").trim().toLowerCase();
+        const filtered = state.articles.filter(art => {
+          const d = new Date(art.date), validDate = !Number.isNaN(d.getTime());
+          return (genre === "すべて" || art.genre === genre) &&
+            (year === "すべて" || (validDate && String(d.getFullYear()) === year)) &&
+            (month === "すべて" || (validDate && String(d.getMonth()+1) === month)) &&
+            (!keyword || `${art.title} ${art.summary} ${art.genre}`.toLowerCase().includes(keyword));
+        });
+        const count = document.getElementById("news-result-count");
+        if (count) count.textContent = `該当記事: ${filtered.length}件 ／ 取得済み: ${state.articles.length}件`;
+        grid.innerHTML = filtered.length ? filtered.map(art => `
+          <article class="jma-card rounded-lg border p-4 shadow-xs">
+            <div class="text-[10px] text-[var(--jma-text-muted)] mb-1">${escapeHTML(art.genre)} ／ ${escapeHTML(art.date)}</div>
             <h3 class="font-black text-sm mb-2 text-[#004098]">${escapeHTML(art.title)}</h3>
-            <p class="text-xs text-[var(--jma-text-muted)]">${escapeHTML(art.summary)}</p>
-          </article>
-        `).join("");
+            <p class="text-xs text-[var(--jma-text-muted)] mb-3">${escapeHTML(art.summary || "記事概要はRSSにありません。")}</p>
+            <a href="${escapeHTML(art.url || "#")}" target="_blank" rel="noopener noreferrer" class="inline-block text-xs font-bold text-blue-700 underline">NHKの記事を開く ↗</a>
+          </article>`).join("") :
+          `<div class="col-span-full jma-card rounded-lg border p-6 text-center text-sm text-[var(--jma-text-muted)]">該当するニュースがありません。RSS取得ボタンで最新記事を取得してください。</div>`;
       }
 
       function renderArticleDetail(id) {
         const container = document.getElementById("article-detail-body");
         if (!container) return;
-        const art = state.articles.find(a => a.id === id) || state.articles[0];
+        const art = state.articles.find(a => a.id === id);
+        if (!art) { container.innerHTML = `<p class="text-sm">記事が見つかりません。ニュース一覧から選択してください。</p>`; return; }
         container.innerHTML = `
+          <div class="text-xs text-[var(--jma-text-muted)] mb-2">${escapeHTML(art.genre)} ／ ${escapeHTML(art.date)}</div>
           <h2 class="text-xl font-black mb-3">${escapeHTML(art.title)}</h2>
-          <p class="text-sm leading-relaxed">${escapeHTML(art.body)}</p>
-        `;
+          <p class="text-sm leading-relaxed mb-4">${escapeHTML(art.body || art.summary || "本文はNHK公式サイトで確認してください。")}</p>
+          ${art.url ? `<a href="${escapeHTML(art.url)}" target="_blank" rel="noopener noreferrer" class="text-sm text-blue-700 underline font-bold">NHK公式記事を開く ↗</a>` : ""}`;
+
       }
 
       function speakCurrentArticle() { showToast("音声読み上げを開始しました"); }
@@ -1243,7 +1397,7 @@
         const q = (document.getElementById("tools100-search")?.value || "").toLowerCase();
         const filtered = TOOLS_100_LIST.filter(t => !q || t.title.toLowerCase().includes(q) || String(t.id).includes(q));
         grid.innerHTML = filtered.map(t => `
-          <button type="button" onclick="App.runTool100(${t.id})" class="text-left p-3 rounded-lg border jma-card cursor-pointer hover:border-[#004098]">
+          <button type="button" ${t.id === 1 ? `onclick="App.runTool100(${t.id})"` : "disabled"} class="text-left p-3 rounded-lg border jma-card ${t.id === 1 ? "cursor-pointer hover:border-[#004098]" : "opacity-60 cursor-not-allowed"}">
             <div class="text-[10px] text-[#004098] font-bold">No.${String(t.id).padStart(3,'0')}</div>
             <div class="font-bold text-xs">${escapeHTML(t.title)}</div>
           </button>
@@ -1266,7 +1420,10 @@
         showToast("不快指数を計算しました");
       }
 
-      function setFontSize(size) { document.body.className = `font-${size} min-h-screen flex flex-col`; }
+      function setFontSize(size) {
+        document.body.classList.remove("font-sm","font-md","font-lg");
+        document.body.classList.add(`font-${size}`);
+      }
       function toggleDarkMode() { document.body.classList.toggle("dark-mode"); }
       function toggleHighContrast() { document.body.classList.toggle("high-contrast"); }
 
