@@ -1,0 +1,12 @@
+{
+  "name": "weather-disaster-portal",
+  "version": "1.0.0",
+  "description": "気象・地震・防災情報ポータル",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
