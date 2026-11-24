@@ -1,10 +1,14 @@
 {
   "name": "weather-disaster-portal",
-  "version": "1.0.0",
-  "description": "気象・地震・防災情報ポータル",
+  "version": "1.0.1",
+  "private": true,
+  "description": "気象・地震・防災・NHKニュース総合情報ポータル",
   "main": "app.js",
   "scripts": {
     "start": "node app.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "express": "^5.1.0"
